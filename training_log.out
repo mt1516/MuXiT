@@ -1,0 +1,17 @@
+nohup: ignoring input
+2025-04-06 08:12:04.904197: I tensorflow/core/util/port.cc:113] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+2025-04-06 08:12:04.963326: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F AVX512_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2025-04-06 08:12:07.020140: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Could not find TensorRT
+INFO:train_multi:Will attempt to set up multi-GPU training with 2 devices: [0, 1] after model loading
+INFO:train_multi:GPU 0: NVIDIA GeForce RTX 3090, configured with 16GB
+INFO:train_multi:GPU 1: NVIDIA GeForce RTX 3090, configured with 16GB
+INFO:train_multi:GPU 2: NVIDIA GeForce RTX 3090, configured with 16GB
+INFO:train_multi:GPU 3: NVIDIA GeForce RTX 3090, configured with 16GB
+INFO:train_multi:GPU 4: NVIDIA GeForce RTX 3090, configured with 16GB
+INFO:train_multi:GPU 5: NVIDIA GeForce RTX 3090, configured with 16GB
+INFO:train_multi:GPU 6: NVIDIA GeForce RTX 3090, configured with 16GB
+INFO:train_multi:GPU 7: NVIDIA GeForce RTX 3090, configured with 16GB
+INFO:train_multi:Auto-configured memory map: {0: '16GiB', 1: '16GiB', 2: '16GiB', 3: '16GiB', 4: '16GiB', 5: '16GiB', 6: '16GiB', 7: '16GiB', 'cpu': '64GiB'}
+/project/fyp24_ho3/tmtong/miniconda3/envs/muxit/lib/python3.11/site-packages/accelerate/state.py:246: UserWarning: OMP_NUM_THREADS/MKL_NUM_THREADS unset, we set it at 24 to improve oob performance.
+  warnings.warn(
