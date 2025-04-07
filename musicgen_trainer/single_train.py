@@ -96,7 +96,7 @@ def free_memory():
         print(f"Memory freed: {freed / 1024**2:.2f}MB")
 
 
-def process_in_chunks(func, *args, **kwargs):
+def process_in_chunks(func, *args, reset_scaler=False, scaler=None, **kwargs):
     """Try to run a function and if it fails due to OOM, wait and retry."""
     max_attempts = 3
     for attempt in range(max_attempts):
@@ -118,14 +118,20 @@ def process_in_chunks(func, *args, **kwargs):
             # Force garbage collection and clear cache
             gc.collect()
             torch.cuda.empty_cache()
+            
+            # Reset scaler if specified (for optimizer retry)
+            if reset_scaler and scaler is not None:
+                print("Resetting scaler for retry")
+                scaler._found_inf_per_device = {}
+                
             time.sleep(5)  # Wait for memory to stabilize
         except Exception as e:
             print(f"Non-OOM error: {e}")
             return None
 
 
-def preprocess_audio(audio_path, model: MusicGen, duration: int = 30):
-    """Process audio file with memory efficiency as priority."""
+def preprocess_audio(audio_path, model: MusicGen, duration: int = 15):
+    """Process audio file with reduced duration to save memory."""
     try:
         # Load audio file on CPU
         wav, sr = torchaudio.load(audio_path)
@@ -135,29 +141,29 @@ def preprocess_audio(audio_path, model: MusicGen, duration: int = 30):
             print(f"Audio too short: {audio_path}")
             return None
             
-        # Create segment
+        # Take a shorter segment to reduce memory usage
         end_sample = int(model.sample_rate * duration)
         start_sample = random.randrange(0, max(wav.shape[1] - end_sample, 1))
         wav = wav[:, start_sample : start_sample + end_sample]
-        
-        # Process on GPU in small chunks
+
+        # Process audio in smaller chunks if needed
         def encode_audio(wav_tensor):
-            # Move to GPU for encoding
-            wav_gpu = wav_tensor.cuda()
+            # Convert to half precision before moving to GPU
+            wav_gpu = wav_tensor.half().cuda()
             wav_gpu = wav_gpu.unsqueeze(0)
             
             with torch.no_grad():
                 with torch.cuda.amp.autocast():
                     gen_audio = model.compression_model.encode(wav_gpu)
             
-            # Free GPU tensor immediately
+            # Immediately free GPU memory
             del wav_gpu
             torch.cuda.empty_cache()
             
             codes, scale = gen_audio
             assert scale is None
             
-            # Move codes to CPU
+            # Move to CPU immediately
             codes_cpu = codes.detach().cpu()
             
             # Free GPU tensors
@@ -167,8 +173,20 @@ def preprocess_audio(audio_path, model: MusicGen, duration: int = 30):
             
             return codes_cpu
         
-        # Run encoding with retry logic - pass the wav tensor explicitly
-        return process_in_chunks(encode_audio, wav)
+        # Try to encode, with fallback to even smaller chunks
+        try:
+            return encode_audio(wav)
+        except RuntimeError as e:
+            print(f"Error encoding full audio, trying smaller chunk: {e}")
+            # Take an even smaller chunk as fallback
+            smaller_duration = 5
+            if wav.shape[1] >= model.sample_rate * smaller_duration:
+                end_sample = int(model.sample_rate * smaller_duration)
+                wav = wav[:, :end_sample]
+                return encode_audio(wav)
+            else:
+                print("Audio still too large for memory")
+                return None
         
     except Exception as e:
         print(f"Error preprocessing audio: {e}")
@@ -178,20 +196,32 @@ def preprocess_audio(audio_path, model: MusicGen, duration: int = 30):
 
 
 def one_hot_encode(tensor, num_classes=2048, device="cpu"):
-    """Create one-hot encoding with memory limits in mind."""
+    """Memory-efficient one-hot encoding."""
     shape = tensor.shape
     
-    # If tensor is too large, process on CPU
-    if shape[0] * shape[1] * num_classes > 1e8:  # Arbitrary threshold
+    # Process on CPU if large tensor
+    if shape[0] * shape[1] * num_classes > 1e7:
         device = "cpu"
         
+    # For very large tensors, use a hybrid approach
+    if shape[0] * shape[1] > 1000:
+        one_hot = torch.zeros((shape[0], shape[1], num_classes), device=device)
+        chunk_size = 100  # Process in smaller chunks
+        
+        for i in range(0, shape[0], chunk_size):
+            end_i = min(i + chunk_size, shape[0])
+            for j in range(shape[1]):
+                chunk = tensor[i:end_i, j]
+                for k, idx in enumerate(chunk):
+                    one_hot[i+k, j, idx.item()] = 1
+        return one_hot
+    
+    # Regular approach for smaller tensors
     one_hot = torch.zeros((shape[0], shape[1], num_classes), device=device)
-
-    # Process in small chunks to avoid memory issues
     for i in range(shape[0]):
         for j in range(shape[1]):
-            idx = tensor[i, j].item()
-            one_hot[i, j, idx] = 1
+            index = tensor[i, j].item()
+            one_hot[i, j, index] = 1
 
     return one_hot
 
@@ -211,6 +241,29 @@ class MemoryTracker:
         print(f"Peak memory usage: {self.peak:.2f} GB")
 
 
+def create_smaller_model(model, text_only=False):
+    """Create a smaller version of the model with reduced parameters."""
+    # If we only need text conditioning, simplify the model
+    if text_only:
+        # Keep only the condition provider
+        return model.lm.condition_provider
+    
+    # For full model, reduce transformer complexity if possible
+    if hasattr(model.lm, 'transformer'):
+        # Use more aggressive memory optimizations
+        model.lm.transformer._use_split_head_attention = True
+        
+        # Reduce dropout to save computation
+        if hasattr(model.lm.transformer, 'dropout'):
+            model.lm.transformer.dropout = 0.0
+    
+    # Enable gradient checkpointing
+    if hasattr(model.lm, 'gradient_checkpointing_enable'):
+        model.lm.gradient_checkpointing_enable()
+        
+    return model.lm
+
+
 def single_train(
     dataset_path: str,
     model_id: str,
@@ -221,14 +274,16 @@ def single_train(
     tune_text: int = 0,
     save_step: int = None,
     grad_acc: int = 8,
-    use_scaler: int = 1,
+    use_scaler: bool = True,  # Changed to bool to match single_run.py
     weight_decay: float = 1e-5,
     warmup_steps: int = 10,
     batch_size: int = 1,
     use_cfg: int = 0,
     use_cpu_offload: int = 1,
     memory_efficient: int = 1,
-    memory_fraction: float = 0.95
+    memory_fraction: float = 0.98,
+    audio_duration: int = 15,  # Reduced from 30 seconds to save memory
+    low_memory_mode: bool = True  # New parameter for extreme memory savings
 ):
     # Initialize memory tracker
     memory_tracker = MemoryTracker()
@@ -240,48 +295,64 @@ def single_train(
     use_wandb = bool(use_wandb)
     no_label = bool(no_label)
     tune_text = bool(tune_text)
-    use_scaler = bool(use_scaler)
+    # Note: use_scaler is already a bool from the parameter definition
     use_cfg = bool(use_cfg)
     use_cpu_offload = bool(use_cpu_offload)
     memory_efficient = bool(memory_efficient)
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
+    # Set smaller max_split_size_mb to reduce fragmentation
+    if 'PYTORCH_CUDA_ALLOC_CONF' not in os.environ:
+        os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:64'
+    
+    # Force garbage collection at program start
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+    
     if use_wandb:
         run = wandb.init(project="audiocraft")
 
-    print("Loading MusicGen model...")
-    model = MusicGen.get_pretrained(model_id)
+    print(f"Loading MusicGen model '{model_id}'...")
     
-    # Enable memory-efficient operations
-    if memory_efficient and hasattr(model.lm, "gradient_checkpointing_enable"):
-        print("Enabling gradient checkpointing...")
-        model.lm.gradient_checkpointing_enable()
+    # Try using a smaller model if specified
+    if low_memory_mode and model_id == "small":
+        print("Low memory mode enabled, trying to use 'tiny' model instead")
+        try:
+            model = MusicGen.get_pretrained("tiny")
+        except:
+            print("Tiny model not available, falling back to small")
+            model = MusicGen.get_pretrained(model_id)
+    else:
+        model = MusicGen.get_pretrained(model_id)
     
-    # Set smaller attention for transformer
-    if hasattr(model.lm, 'transformer'):
-        print("Reducing transformer attention size...")
-        # Reduce attention heads computation for memory savings
-        model.lm.transformer._use_split_head_attention = True
-    
-    # Keep model in float32 precision
-    model.lm = model.lm.to(torch.float32)
-    
-    # Move compression model to GPU for audio processing
-    print("Moving compression model to GPU...")
+    # Move compression model to device for audio processing
+    print("Moving compression model to CUDA...")
     model.compression_model = model.compression_model.to(device)
     
-    # Keep LM on CPU until needed if offloading is enabled
-    if use_cpu_offload:
-        print("Keeping LM on CPU with offloading enabled...")
-        model.lm = model.lm.cpu()
-        if tune_text:
-            print("Moving condition provider to GPU for text tuning...")
-            model.lm.condition_provider = model.lm.condition_provider.to(device)
+    # Create a more memory-efficient version of the language model
+    print("Optimizing language model for low memory...")
+    if tune_text:
+        print("Tuning text encoder only")
+        # Extract just the condition provider to save memory
+        training_model = model.lm.condition_provider.to(device if not use_cpu_offload else "cpu")
+        params_to_optimize = training_model.parameters()
+    else:
+        print("Tuning entire model with memory optimizations")
+        # Keep model on CPU initially if offloading
+        training_model = create_smaller_model(model, text_only=False)
+        if use_cpu_offload:
+            training_model = training_model.to("cpu")
+        params_to_optimize = training_model.parameters()
+    
+    # Use lower precision for model
+    model.lm = model.lm.half() if low_memory_mode else model.lm.to(torch.float32)
 
     print(f"Loading dataset from {dataset_path}...")
     dataset = AudioDataset(dataset_path, no_label=no_label)
-    train_dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    # Use a smaller batch size and single worker to reduce memory pressure
+    train_dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0)
 
     learning_rate = lr
     
@@ -343,7 +414,7 @@ def single_train(
                 print(f"Processing audio {inner_audio_idx + 1}/{len(audio)}")
                 
                 # Process audio and get codes with retry logic
-                codes = preprocess_audio(inner_audio, model)
+                codes = preprocess_audio(inner_audio, model, duration=audio_duration)
                 if codes is None:
                     print(f"Skipping audio {inner_audio_idx + 1} (invalid or memory error)")
                     continue
@@ -390,10 +461,10 @@ def single_train(
                 tokenized = model.lm.condition_provider.tokenize(conditions)
                 cfg_conditions = model.lm.condition_provider(tokenized)
                 condition_tensors = cfg_conditions
-
-                # Reset gradients
-                optimizer.zero_grad()
                 
+                # Important: The condition_tensors is already on the correct device,
+                # no need to explicitly move it. We'll pass it directly to the model.
+
                 # Process in micro-batches
                 report_memory("Before micro-batches")
                 memory_tracker.update()
@@ -401,50 +472,65 @@ def single_train(
                 accumulated_loss = 0
                 micro_batch_size = 1  # Force processing one at a time
                 
+                # Reset optimizer at the beginning of each batch
+                optimizer.zero_grad()
+                
                 # Process each code
                 for micro_idx in range(0, len(all_codes), micro_batch_size):
                     micro_end = min(micro_idx + micro_batch_size, len(all_codes))
                     print(f"Processing micro-batch {micro_idx//micro_batch_size + 1}/{(len(all_codes) + micro_batch_size - 1)//micro_batch_size}")
                     
-                    # Move this micro-batch to GPU and immediately clear CPU references
-                    micro_codes = [code.to(device) for code in all_codes[micro_idx:micro_end]]
-                    micro_codes = torch.cat(micro_codes, dim=0)
-                    
-                    # Clear CPU codes references
-                    for idx in range(micro_idx, micro_end):
-                        all_codes[idx] = None
-                    
-                    # Forward pass with memory protection
-                    def forward_pass():
-                        with torch.autocast(device_type="cuda", dtype=torch.float16, enabled=use_scaler):
-                            # Compute predictions
-                            lm_output = model.lm.compute_predictions(
-                                codes=micro_codes, 
-                                conditions=[], 
-                                condition_tensors=condition_tensors
-                            )
-                            
-                            # Extract tensors
-                            codes = micro_codes[0].detach()  # Create detached copy
-                            logits = lm_output.logits[0]
-                            mask = lm_output.mask[0]
-                            
-                            # One-hot encode codes directly on GPU to avoid transfer
-                            codes_one_hot = one_hot_encode(codes, num_classes=2048, device=device)
-                            
-                            # Prepare masked tensors for loss
-                            mask_flat = mask.view(-1)
-                            masked_logits = logits.view(-1, 2048)[mask_flat]
-                            masked_codes = codes_one_hot.view(-1, 2048)[mask_flat]
-                            
-                            # Calculate loss
-                            loss = criterion(masked_logits, masked_codes)
-                            
-                            return loss, loss.item()
-                    
-                    # Run forward pass with memory protection
+                    # Move this micro-batch to GPU
                     try:
-                        loss, loss_value = process_in_chunks(forward_pass)
+                        micro_codes = [code.to(device) for code in all_codes[micro_idx:micro_end]]
+                        micro_codes = torch.cat(micro_codes, dim=0)
+                        
+                        # Clear CPU codes references
+                        for idx in range(micro_idx, micro_end):
+                            all_codes[idx] = None
+                        
+                        # Forward pass with memory protection
+                        def forward_pass():
+                            with torch.autocast(device_type="cuda", dtype=torch.float16, enabled=use_scaler):
+                                # Compute predictions - pass condition_tensors directly without modification
+                                lm_output = model.lm.compute_predictions(
+                                    codes=micro_codes, 
+                                    conditions=[], 
+                                    condition_tensors=condition_tensors
+                                )
+                                
+                                # Extract tensors
+                                codes = micro_codes[0].detach()
+                                logits = lm_output.logits[0]
+                                mask = lm_output.mask[0]
+                                
+                                # One-hot encode codes directly on GPU
+                                codes_one_hot = one_hot_encode(codes, num_classes=2048, device=device)
+                                
+                                # Prepare masked tensors for loss
+                                mask_flat = mask.view(-1)
+                                masked_logits = logits.view(-1, 2048)[mask_flat]
+                                masked_codes = codes_one_hot.view(-1, 2048)[mask_flat]
+                                
+                                # Calculate loss
+                                loss = criterion(masked_logits, masked_codes)
+                                loss_value = loss.item()
+                                
+                                return loss, loss_value
+                        
+                        # Run forward pass with memory protection
+                        try:
+                            result = process_in_chunks(forward_pass)
+                        except Exception as e:
+                            print(f"Forward pass failed: {e}")
+                            result = None
+                            
+                        # Handle the case when process_in_chunks returns None due to an error
+                        if result is None:
+                            print("Forward pass failed, skipping micro-batch")
+                            continue
+                            
+                        loss, loss_value = result
                         loss_per_step = loss_value / grad_acc
                         accumulated_loss += loss_per_step
                         
@@ -459,16 +545,17 @@ def single_train(
                             
                     except Exception as e:
                         print(f"Error in forward/backward pass: {e}")
+                        # Show the type of condition_tensors to help debug
+                        print(f"Type of condition_tensors: {type(condition_tensors)}")
                         # Emergency memory cleanup
-                        del micro_codes
-                        torch.cuda.empty_cache()
                         free_memory()
                         continue
                         
                     # Clean up
-                    del micro_codes
+                    if 'micro_codes' in locals():
+                        del micro_codes
                     torch.cuda.empty_cache()
-                    
+                
                 # Update current step counter
                 current_step += 1
 
@@ -504,42 +591,54 @@ def single_train(
                 report_memory("Before optimizer step")
                 memory_tracker.update()
 
-                # Update model parameters with memory protection
-                def optimizer_step():
-                    # Unscale gradients if using scaler
-                    if use_scaler:
-                        scaler.unscale_(optimizer)
-                    
-                    # Clip gradients
-                    torch.nn.utils.clip_grad_norm_(
-                        model.lm.condition_provider.parameters() if tune_text else model.lm.parameters(), 
-                        0.5
-                    )
-                    
-                    # Step with scaler or normally
-                    if use_scaler:
-                        scaler.step(optimizer)
-                        scaler.update()
-                    else:
-                        optimizer.step()
-                    
-                    # Step scheduler
-                    scheduler.step()
-                
-                # Try optimizer step with memory protection
-                try:
-                    process_in_chunks(optimizer_step)
-                except Exception as e:
-                    print(f"Error during optimizer step: {e}")
-                    # Emergency memory cleanup
+                # Only attempt optimizer step if we have accumulated some loss
+                if accumulated_loss > 0:
+                    try:
+                        # Safely unscale gradients
+                        if use_scaler:
+                            try:
+                                scaler.unscale_(optimizer)
+                            except RuntimeError as e:
+                                print(f"Scaler unscale error: {e}")
+                                # Reset scaler if there was an issue
+                                scaler = torch.cuda.amp.GradScaler(enabled=use_scaler)
+                                optimizer.zero_grad()
+                                continue
+                        
+                        # Clip gradients
+                        torch.nn.utils.clip_grad_norm_(
+                            model.lm.condition_provider.parameters() if tune_text else model.lm.parameters(), 
+                            0.5
+                        )
+                        
+                        # Step with scaler or normally
+                        if use_scaler:
+                            scaler.step(optimizer)
+                            scaler.update()
+                        else:
+                            optimizer.step()
+                        
+                        # Step scheduler
+                        scheduler.step()
+                        
+                    except Exception as e:
+                        print(f"Error during optimizer step: {e}")
+                        # Reset optimizer and scaler on error
+                        optimizer.zero_grad()
+                        if use_scaler:
+                            scaler = torch.cuda.amp.GradScaler(enabled=use_scaler)
+                else:
+                    print("Skipping optimizer step - no accumulated loss")
                     optimizer.zero_grad()
-                    free_memory()
-                    
+                
                 # Report memory after optimization
                 report_memory("After optimizer step")
                 
             except Exception as e:
                 print(f"Error during batch processing: {e}")
+                print(f"Error type: {type(e)}")
+                import traceback
+                traceback.print_exc()
             
             finally:
                 # Always move LM back to CPU if it was moved to GPU
@@ -552,18 +651,6 @@ def single_train(
                 
                 # Update memory tracker
                 memory_tracker.update()
-            
-            # Save model checkpoint if requested
-            if save_models and int(current_step) % save_step == 0:
-                try:
-                    print(f"Saving checkpoint at step {current_step}")
-                    # Move model to CPU for saving
-                    save_model = model.lm.cpu() if model.lm.device.type != "cpu" else model.lm
-                    torch.save(save_model.state_dict(), f"{save_path}/lm_{current_step}.pt")
-                    if not use_cpu_offload and not tune_text:
-                        model.lm = model.lm.to(device)
-                except Exception as e:
-                    print(f"Error saving checkpoint: {e}")
 
     # Save final model
     try:

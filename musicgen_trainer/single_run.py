@@ -2,7 +2,7 @@ import os
 # Set memory limits before importing torch
 os.environ["CUDA_VISIBLE_DEVICES"] = "7"
 # Configure memory allocator to limit memory usage and reduce fragmentation
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128,garbage_collection_threshold:0.8"
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:64,garbage_collection_threshold:0.6"
 
 from single_train import single_train
 
@@ -25,7 +25,9 @@ parser.add_argument('--use_cfg', type=int, required=False, default=0)
 parser.add_argument('--use_cpu_offload', type=int, required=False, default=1)
 parser.add_argument('--memory_efficient', type=int, required=False, default=1)
 parser.add_argument('--use_scaler', type=bool, required=False, default=True)
-parser.add_argument('--memory_fraction', type=float, required=False, default=0.95)
+parser.add_argument('--memory_fraction', type=float, required=False, default=0.98)
+parser.add_argument('--audio_duration', type=int, required=False, default=10)
+parser.add_argument('--low_memory_mode', type=bool, required=False, default=True)
 args = parser.parse_args()
 
 single_train(
@@ -46,4 +48,6 @@ single_train(
     memory_efficient=args.memory_efficient,
     use_scaler=args.use_scaler,
     memory_fraction=args.memory_fraction,
+    audio_duration=args.audio_duration,
+    low_memory_mode=args.low_memory_mode,
 )
