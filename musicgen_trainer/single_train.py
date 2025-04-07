@@ -98,7 +98,7 @@ def free_memory():
 
 def process_in_chunks(func, *args, reset_scaler=False, scaler=None, **kwargs):
     """Try to run a function and if it fails due to OOM, wait and retry."""
-    max_attempts = 3
+    max_attempts = 1
     for attempt in range(max_attempts):
         try:
             result = func(*args, **kwargs)
@@ -124,7 +124,7 @@ def process_in_chunks(func, *args, reset_scaler=False, scaler=None, **kwargs):
                 print("Resetting scaler for retry")
                 scaler._found_inf_per_device = {}
                 
-            time.sleep(5)  # Wait for memory to stabilize
+            # time.sleep(5)  # Wait for memory to stabilize
         except Exception as e:
             print(f"Non-OOM error: {e}")
             return None
@@ -261,6 +261,59 @@ def create_smaller_model(model, text_only=False):
         model.lm.gradient_checkpointing_enable()
         
     return model.lm
+
+
+def cpu_optimizer_step(optimizer, parameters, grad_clip_value=0.5):
+    """Execute optimizer step completely on CPU to avoid CUDA OOM errors."""
+    print("Executing CPU-based optimizer step...")
+    
+    # Get optimizer parameter groups and hyperparameters
+    param_groups = optimizer.param_groups
+    
+    # Process each parameter group
+    for group in param_groups:
+        weight_decay = group['weight_decay']
+        lr = group['lr']
+        
+        # Process each parameter in the group
+        for p in group['params']:
+            if p.grad is None:
+                continue
+                
+            # Move parameter and gradient to CPU completely
+            param_cpu = p.data.detach().cpu()
+            grad_cpu = p.grad.detach().cpu()
+            
+            # Clear GPU gradient to free memory immediately
+            p.grad = None
+            
+            # Apply weight decay on CPU
+            if weight_decay != 0:
+                grad_cpu.add_(param_cpu, alpha=weight_decay)
+                
+            # Gradient clipping on CPU
+            grad_norm = grad_cpu.norm()
+            if grad_norm > grad_clip_value:
+                grad_cpu.mul_(grad_clip_value / (grad_norm + 1e-6))
+            
+            # Standard SGD-like update on CPU (simplified AdamW)
+            param_cpu.add_(grad_cpu, alpha=-lr)
+            
+            # Copy parameter back to original device (which might be CPU if offloading)
+            # Use non-blocking async copy to reduce chance of OOM
+            with torch.no_grad():
+                p.copy_(param_cpu)
+    
+    # Clear temporary CPU tensors
+    del param_cpu, grad_cpu
+    
+    # Make sure we don't hold references to the optimizer internals
+    del param_groups
+    
+    # Force cleanup after CPU computation
+    gc.collect()
+    
+    return True
 
 
 def single_train(
@@ -583,6 +636,12 @@ def single_train(
                 # Only attempt optimizer step if we have accumulated some loss
                 if accumulated_loss > 0:
                     try:
+                        # Aggressively free memory before optimization
+                        print("Freeing memory before optimizer step")
+                        gc.collect()
+                        torch.cuda.empty_cache()
+                        report_memory("After cleanup")
+                        
                         # Safely unscale gradients
                         if use_scaler:
                             try:
@@ -594,18 +653,56 @@ def single_train(
                                 optimizer.zero_grad()
                                 continue
                         
-                        # Clip gradients
-                        torch.nn.utils.clip_grad_norm_(
-                            model.lm.condition_provider.parameters() if tune_text else model.lm.parameters(), 
-                            0.5
-                        )
-                        
-                        # Step with scaler or normally
-                        if use_scaler:
-                            scaler.step(optimizer)
-                            scaler.update()
-                        else:
-                            optimizer.step()
+                        try:
+                            # Try GPU-based gradient clipping first
+                            torch.nn.utils.clip_grad_norm_(
+                                model.lm.condition_provider.parameters() if tune_text else model.lm.parameters(), 
+                                0.5
+                            )
+                            
+                            # Step with scaler or normally
+                            if use_scaler:
+                                scaler.step(optimizer)
+                                scaler.update()
+                            else:
+                                optimizer.step()
+                                
+                        except RuntimeError as e:
+                            if "CUDA out of memory" in str(e):
+                                print("CUDA OOM during optimizer step, falling back to CPU optimization")
+                                
+                                # Ensure all tensors are on CPU before proceeding
+                                print("Moving model to CPU for optimization...")
+                                
+                                # Explicitly move the model to CPU first to free GPU memory
+                                if use_cpu_offload:
+                                    lm_was_moved = True
+                                    model.lm = model.lm.cpu()
+                                    
+                                # Force memory cleanup before CPU optimization
+                                print("Clearing CUDA memory before CPU optimization")
+                                for obj in gc.get_objects():
+                                    try:
+                                        if torch.is_tensor(obj) and obj.device.type == 'cuda':
+                                            del obj
+                                    except:
+                                        pass
+                                gc.collect()
+                                torch.cuda.empty_cache()
+                                
+                                # Now execute CPU optimization with zero GPU usage
+                                success = cpu_optimizer_step(
+                                    optimizer, 
+                                    model.lm.condition_provider.parameters() if tune_text else model.lm.parameters(),
+                                    0.5
+                                )
+                                
+                                # Reset the scaler after CPU optimization
+                                if use_scaler:
+                                    print("Resetting scaler after CPU fallback")
+                                    scaler = torch.cuda.amp.GradScaler(enabled=use_scaler)
+                            else:
+                                raise
                         
                         # Step scheduler
                         scheduler.step()
