@@ -1,87 +1,829 @@
 nohup: ignoring input
-2025-04-06 09:54:48.548964: I tensorflow/core/util/port.cc:113] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
-2025-04-06 09:54:48.619317: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+2025-04-07 16:07:56.537302: I tensorflow/core/util/port.cc:113] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+2025-04-07 16:07:56.580454: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
 To enable the following instructions: AVX2 AVX512F AVX512_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
-2025-04-06 09:54:51.120574: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Could not find TensorRT
-INFO:train_multi:Checking memory for GPUs: [0, 1, 2, 3, 4, 5, 6, 7]
-INFO:train_multi:GPU 0: 23.6GB total, 23.6GB free
-INFO:train_multi:GPU 1: 23.6GB total, 23.6GB free
-INFO:train_multi:GPU 2: 23.6GB total, 23.6GB free
-INFO:train_multi:GPU 3: 23.6GB total, 23.6GB free
-INFO:train_multi:GPU 4: 23.6GB total, 23.6GB free
-INFO:train_multi:GPU 5: 23.6GB total, 23.6GB free
-INFO:train_multi:GPU 6: 23.6GB total, 23.6GB free
-INFO:train_multi:GPU 7: 23.6GB total, 23.6GB free
-INFO:train_multi:Auto-configured memory map: {'cpu': '64GiB', 0: '16GiB', 1: '16GiB', 2: '16GiB', 3: '16GiB', 4: '16GiB', 5: '16GiB', 6: '16GiB', 7: '16GiB'}
-INFO:train_multi:Initializing accelerator
-/project/fyp24_ho3/tmtong/miniconda3/envs/muxit/lib/python3.11/site-packages/accelerate/state.py:246: UserWarning: OMP_NUM_THREADS/MKL_NUM_THREADS unset, we set it at 24 to improve oob performance.
-  warnings.warn(
-
----- GPU Diagnostics ----
-CUDA available: True
-CUDA version: 12.1
-PyTorch CUDA version: 12.1
-Device count: 8
-Device 0: NVIDIA GeForce RTX 3090
-  Memory: 25.32 GB
-Device 1: NVIDIA GeForce RTX 3090
-  Memory: 25.32 GB
-Device 2: NVIDIA GeForce RTX 3090
-  Memory: 25.32 GB
-Device 3: NVIDIA GeForce RTX 3090
-  Memory: 25.32 GB
-Device 4: NVIDIA GeForce RTX 3090
-  Memory: 25.32 GB
-Device 5: NVIDIA GeForce RTX 3090
-  Memory: 25.32 GB
-Device 6: NVIDIA GeForce RTX 3090
-  Memory: 25.32 GB
-Device 7: NVIDIA GeForce RTX 3090
-  Memory: 25.32 GB
-
----- Environment Variables ----
-CUDA_VISIBLE_DEVICES: Not set
-CUDA_DEVICE_ORDER: Not set
-
-Using GPUs:
-  - Model (primary): cuda:0
-  - Data preprocessing: [0, 1, 2, 3, 4, 5, 6, 7]
-Set current CUDA device to: cuda:0
-CUDA confirmed available with 8 devices
-Test tensor created on cuda:0
-Calculated per-device batch size: 1
-Total batch size: 1
-Memory management:
-  - Gradient accumulation steps: 2
-  - Gradient checkpointing: Disabled
-  - Memory efficient attention: Enabled
-  - Mixed precision: bf16
-  - CPU offloading: Enabled
-
-Starting training process with GPU debugging enabled
-Configured environment for distributed training with 8 GPUs
-Starting training with explicit GPU acceleration...
-Training completed, restored CUDA visibility to: 0,1,2,3,4,5,6,7
-Traceback (most recent call last):
-  File "/project/fyp24_ho3/tmtong/MuXiT/musicgen_trainer/run_multi.py", line 175, in <module>
-    train_multi(
-  File "/csproject/fyp24_ho3/tmtong/MuXiT/musicgen_trainer/train_multi.py", line 557, in train_multi
-    accelerator = Accelerator(
-                  ^^^^^^^^^^^^
-  File "/project/fyp24_ho3/tmtong/miniconda3/envs/muxit/lib/python3.11/site-packages/accelerate/accelerator.py", line 415, in __init__
-    self.state = AcceleratorState(
-                 ^^^^^^^^^^^^^^^^^
-  File "/project/fyp24_ho3/tmtong/miniconda3/envs/muxit/lib/python3.11/site-packages/accelerate/state.py", line 861, in __init__
-    PartialState(cpu, **kwargs)
-  File "/project/fyp24_ho3/tmtong/miniconda3/envs/muxit/lib/python3.11/site-packages/accelerate/state.py", line 252, in __init__
-    torch.distributed.init_process_group(backend=self.backend, **kwargs)
-  File "/project/fyp24_ho3/tmtong/miniconda3/envs/muxit/lib/python3.11/site-packages/torch/distributed/c10d_logger.py", line 74, in wrapper
-    func_return = func(*args, **kwargs)
-                  ^^^^^^^^^^^^^^^^^^^^^
-  File "/project/fyp24_ho3/tmtong/miniconda3/envs/muxit/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py", line 1148, in init_process_group
-    default_pg, _ = _new_process_group_helper(
-                    ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/project/fyp24_ho3/tmtong/miniconda3/envs/muxit/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py", line 1264, in _new_process_group_helper
-    backend_class = ProcessGroupGloo(backend_prefix_store, group_rank, group_size, timeout=timeout)
-                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-RuntimeError: Socket Timeout
+2025-04-07 16:07:57.960170: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Could not find TensorRT
+/project/fyp24_ho3/tmtong/miniconda3/envs/muxit/lib/python3.11/site-packages/transformers/models/encodec/modeling_encodec.py:124: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.clone().detach() or sourceTensor.clone().detach().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  self.register_buffer("padding_total", torch.tensor(kernel_size - stride, dtype=torch.int64), persistent=False)
+Limited GPU memory to 98.0% (23.11 GB)
+Loading MusicGen model 'facebook/musicgen-stereo-melody'...
+Moving compression model to CUDA...
+Optimizing language model for low memory...
+Tuning entire model with memory optimizations
+Loading dataset from FMA_data...
+Tuning entire model
+Starting epoch 0/1
+Memory Start of batch 0 - Allocated: 822.90MB, Reserved: 3898.00MB, Max: 23668.00MB
+System Memory - Used: 18.01GB, Available: 105.97GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 6255.42MB, Reserved: 6368.00MB, Max: 23668.00MB
+System Memory - Used: 13.50GB, Available: 110.48GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 0/5666, Loss: 2.39475154876709
+Memory Before optimizer step - Allocated: 11691.80MB, Reserved: 12070.00MB, Max: 23668.00MB
+System Memory - Used: 13.56GB, Available: 110.42GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 11691.80MB, Reserved: 12070.00MB, Max: 23668.00MB
+System Memory - Used: 13.55GB, Available: 110.42GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11693.86MB, Reserved: 11990.00MB, Max: 23668.00MB
+System Memory - Used: 19.27GB, Available: 104.70GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 1 - Allocated: 11693.86MB, Reserved: 11990.00MB, Max: 23668.00MB
+System Memory - Used: 19.27GB, Available: 104.70GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17128.49MB, Reserved: 17388.00MB, Max: 23668.00MB
+System Memory - Used: 15.86GB, Available: 108.12GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 1/5666, Loss: 1.9408254623413086
+Memory Before optimizer step - Allocated: 22551.57MB, Reserved: 23128.00MB, Max: 23668.00MB
+System Memory - Used: 15.86GB, Available: 108.12GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22551.57MB, Reserved: 23128.00MB, Max: 23668.00MB
+System Memory - Used: 15.86GB, Available: 108.12GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11695.17MB, Reserved: 11992.00MB, Max: 23668.00MB
+System Memory - Used: 20.32GB, Available: 103.66GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 2 - Allocated: 11695.17MB, Reserved: 11992.00MB, Max: 23668.00MB
+System Memory - Used: 20.32GB, Available: 103.66GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17128.27MB, Reserved: 17382.00MB, Max: 23668.00MB
+System Memory - Used: 17.73GB, Available: 106.25GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 2/5666, Loss: 2.3171050548553467
+Memory Before optimizer step - Allocated: 22551.69MB, Reserved: 23108.00MB, Max: 23668.00MB
+System Memory - Used: 17.72GB, Available: 106.26GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22551.69MB, Reserved: 23108.00MB, Max: 23668.00MB
+System Memory - Used: 17.72GB, Available: 106.26GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11694.22MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 20.86GB, Available: 103.12GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 3 - Allocated: 11694.22MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 20.86GB, Available: 103.12GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17126.11MB, Reserved: 17382.00MB, Max: 23668.00MB
+System Memory - Used: 18.98GB, Available: 104.99GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 3/5666, Loss: 2.938599109649658
+Memory Before optimizer step - Allocated: 22551.75MB, Reserved: 23204.00MB, Max: 23668.00MB
+System Memory - Used: 18.97GB, Available: 105.00GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22551.75MB, Reserved: 23204.00MB, Max: 23668.00MB
+System Memory - Used: 18.97GB, Available: 105.01GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11693.29MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 21.46GB, Available: 102.51GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 4 - Allocated: 11693.29MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 21.47GB, Available: 102.51GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17125.54MB, Reserved: 17382.00MB, Max: 23668.00MB
+System Memory - Used: 20.22GB, Available: 103.76GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 4/5666, Loss: 2.207242250442505
+Memory Before optimizer step - Allocated: 22552.12MB, Reserved: 23278.00MB, Max: 23668.00MB
+System Memory - Used: 20.22GB, Available: 103.76GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22552.12MB, Reserved: 23278.00MB, Max: 23668.00MB
+System Memory - Used: 20.22GB, Available: 103.76GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11693.65MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 21.80GB, Available: 102.17GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 5 - Allocated: 11693.65MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 21.80GB, Available: 102.18GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17128.06MB, Reserved: 17386.00MB, Max: 23668.00MB
+System Memory - Used: 21.08GB, Available: 102.90GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 5/5666, Loss: 2.125713586807251
+Memory Before optimizer step - Allocated: 22553.29MB, Reserved: 23062.00MB, Max: 23668.00MB
+System Memory - Used: 21.08GB, Available: 102.90GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22553.29MB, Reserved: 23062.00MB, Max: 23668.00MB
+System Memory - Used: 21.08GB, Available: 102.90GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11695.17MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 21.96GB, Available: 102.02GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 6 - Allocated: 11695.17MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 21.96GB, Available: 102.02GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17128.35MB, Reserved: 17384.00MB, Max: 23668.00MB
+System Memory - Used: 21.29GB, Available: 102.69GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 6/5666, Loss: 1.9863250255584717
+Memory Before optimizer step - Allocated: 22552.74MB, Reserved: 23044.00MB, Max: 23668.00MB
+System Memory - Used: 21.29GB, Available: 102.69GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22552.74MB, Reserved: 23044.00MB, Max: 23668.00MB
+System Memory - Used: 21.28GB, Available: 102.69GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11694.27MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 21.96GB, Available: 102.01GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 7 - Allocated: 11694.27MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 21.96GB, Available: 102.01GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17126.10MB, Reserved: 17382.00MB, Max: 23668.00MB
+System Memory - Used: 21.33GB, Available: 102.65GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 7/5666, Loss: 2.1492109298706055
+Memory Before optimizer step - Allocated: 22551.97MB, Reserved: 23102.00MB, Max: 23668.00MB
+System Memory - Used: 21.33GB, Available: 102.64GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22551.97MB, Reserved: 23102.00MB, Max: 23668.00MB
+System Memory - Used: 21.33GB, Available: 102.65GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11693.24MB, Reserved: 11976.00MB, Max: 23668.00MB
+System Memory - Used: 21.94GB, Available: 102.03GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 8 - Allocated: 11693.24MB, Reserved: 11976.00MB, Max: 23668.00MB
+System Memory - Used: 21.94GB, Available: 102.03GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17131.03MB, Reserved: 17440.00MB, Max: 23668.00MB
+System Memory - Used: 21.33GB, Available: 102.65GB
+Processing micro-batch 1/1
+Failed after 1 attempts due to CUDA OOM
+Forward pass failed: CUDA out of memory. Tried to allocate 18.00 MiB. GPU 0 has a total capacty of 23.58 GiB of which 5.06 MiB is free. Including non-PyTorch memory, this process has 23.57 GiB memory in use. Of the allocated memory 22.34 GiB is allocated by PyTorch, and 920.24 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+Forward pass failed, skipping micro-batch
+Epoch: 0/1, Batch: 8/5666, Loss: 0
+Memory Before optimizer step - Allocated: 17131.06MB, Reserved: 23792.00MB, Max: 23668.00MB
+System Memory - Used: 21.34GB, Available: 102.64GB
+Skipping optimizer step - no accumulated loss
+Memory After optimizer step - Allocated: 17131.06MB, Reserved: 23792.00MB, Max: 23668.00MB
+System Memory - Used: 21.34GB, Available: 102.64GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 9 - Allocated: 11700.86MB, Reserved: 11990.00MB, Max: 23668.00MB
+System Memory - Used: 21.32GB, Available: 102.65GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17125.79MB, Reserved: 17380.00MB, Max: 23668.00MB
+System Memory - Used: 21.32GB, Available: 102.66GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 9/5666, Loss: 2.6107101440429688
+Memory Before optimizer step - Allocated: 22552.33MB, Reserved: 23076.00MB, Max: 23668.00MB
+System Memory - Used: 21.32GB, Available: 102.66GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22552.33MB, Reserved: 23076.00MB, Max: 23668.00MB
+System Memory - Used: 21.32GB, Available: 102.66GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11693.86MB, Reserved: 11990.00MB, Max: 23668.00MB
+System Memory - Used: 21.90GB, Available: 102.08GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 10 - Allocated: 11693.86MB, Reserved: 11990.00MB, Max: 23668.00MB
+System Memory - Used: 21.90GB, Available: 102.08GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17145.18MB, Reserved: 18352.00MB, Max: 23668.00MB
+System Memory - Used: 21.28GB, Available: 102.69GB
+Processing micro-batch 1/1
+Failed after 1 attempts due to CUDA OOM
+Forward pass failed: CUDA out of memory. Tried to allocate 28.00 MiB. GPU 0 has a total capacty of 23.58 GiB of which 5.06 MiB is free. Including non-PyTorch memory, this process has 23.57 GiB memory in use. Of the allocated memory 22.65 GiB is allocated by PyTorch, and 599.77 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+Forward pass failed, skipping micro-batch
+Epoch: 0/1, Batch: 10/5666, Loss: 0
+Memory Before optimizer step - Allocated: 17145.21MB, Reserved: 23792.00MB, Max: 23668.00MB
+System Memory - Used: 21.29GB, Available: 102.69GB
+Skipping optimizer step - no accumulated loss
+Memory After optimizer step - Allocated: 17145.21MB, Reserved: 23792.00MB, Max: 23668.00MB
+System Memory - Used: 21.29GB, Available: 102.69GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 11 - Allocated: 11715.01MB, Reserved: 12030.00MB, Max: 23668.00MB
+System Memory - Used: 21.28GB, Available: 102.69GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17126.39MB, Reserved: 17420.00MB, Max: 23668.00MB
+System Memory - Used: 21.28GB, Available: 102.69GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 11/5666, Loss: 2.2981534004211426
+Memory Before optimizer step - Allocated: 22552.28MB, Reserved: 23074.00MB, Max: 23668.00MB
+System Memory - Used: 21.28GB, Available: 102.69GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22552.28MB, Reserved: 23074.00MB, Max: 23668.00MB
+System Memory - Used: 21.28GB, Available: 102.69GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11693.81MB, Reserved: 11976.00MB, Max: 23668.00MB
+System Memory - Used: 21.89GB, Available: 102.09GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 12 - Allocated: 11693.81MB, Reserved: 11976.00MB, Max: 23668.00MB
+System Memory - Used: 21.89GB, Available: 102.09GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17126.17MB, Reserved: 17382.00MB, Max: 23668.00MB
+System Memory - Used: 21.28GB, Available: 102.70GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 12/5666, Loss: 2.3102612495422363
+Memory Before optimizer step - Allocated: 22552.07MB, Reserved: 23076.00MB, Max: 23668.00MB
+System Memory - Used: 21.28GB, Available: 102.69GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22552.07MB, Reserved: 23076.00MB, Max: 23668.00MB
+System Memory - Used: 21.28GB, Available: 102.69GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11693.60MB, Reserved: 11976.00MB, Max: 23668.00MB
+System Memory - Used: 21.92GB, Available: 102.06GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 13 - Allocated: 11693.60MB, Reserved: 11976.00MB, Max: 23668.00MB
+System Memory - Used: 21.92GB, Available: 102.06GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17126.00MB, Reserved: 17380.00MB, Max: 23668.00MB
+System Memory - Used: 21.39GB, Available: 102.58GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 13/5666, Loss: 2.286015510559082
+Memory Before optimizer step - Allocated: 22552.22MB, Reserved: 23076.00MB, Max: 23668.00MB
+System Memory - Used: 21.39GB, Available: 102.58GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22552.22MB, Reserved: 23076.00MB, Max: 23668.00MB
+System Memory - Used: 21.39GB, Available: 102.58GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11693.75MB, Reserved: 11976.00MB, Max: 23668.00MB
+System Memory - Used: 21.99GB, Available: 101.99GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 14 - Allocated: 11693.75MB, Reserved: 11976.00MB, Max: 23668.00MB
+System Memory - Used: 21.99GB, Available: 101.99GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Error preprocessing audio: Expecting stereo audio but audio num channels is 1
+Skipping audio 1 (invalid or memory error)
+Skipping batch (no valid audio)
+Memory Start of batch 15 - Allocated: 11693.75MB, Reserved: 11976.00MB, Max: 23668.00MB
+System Memory - Used: 21.99GB, Available: 101.99GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17125.86MB, Reserved: 17380.00MB, Max: 23668.00MB
+System Memory - Used: 21.39GB, Available: 102.59GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 15/5666, Loss: 1.9368788003921509
+Memory Before optimizer step - Allocated: 22551.90MB, Reserved: 23076.00MB, Max: 23668.00MB
+System Memory - Used: 21.39GB, Available: 102.59GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22551.90MB, Reserved: 23076.00MB, Max: 23668.00MB
+System Memory - Used: 21.39GB, Available: 102.59GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11693.43MB, Reserved: 11976.00MB, Max: 23668.00MB
+System Memory - Used: 22.04GB, Available: 101.94GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 16 - Allocated: 11693.43MB, Reserved: 11976.00MB, Max: 23668.00MB
+System Memory - Used: 22.04GB, Available: 101.94GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17126.50MB, Reserved: 17382.00MB, Max: 23668.00MB
+System Memory - Used: 21.49GB, Available: 102.48GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 16/5666, Loss: 1.8495770692825317
+Memory Before optimizer step - Allocated: 22551.66MB, Reserved: 23092.00MB, Max: 23668.00MB
+System Memory - Used: 21.50GB, Available: 102.48GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22551.66MB, Reserved: 23092.00MB, Max: 23668.00MB
+System Memory - Used: 21.50GB, Available: 102.48GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11694.19MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 22.09GB, Available: 101.89GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 17 - Allocated: 11694.19MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 22.08GB, Available: 101.89GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17126.26MB, Reserved: 17382.00MB, Max: 23668.00MB
+System Memory - Used: 21.54GB, Available: 102.43GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 17/5666, Loss: 2.4576632976531982
+Memory Before optimizer step - Allocated: 22551.87MB, Reserved: 23076.00MB, Max: 23668.00MB
+System Memory - Used: 21.55GB, Available: 102.43GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22551.87MB, Reserved: 23076.00MB, Max: 23668.00MB
+System Memory - Used: 21.55GB, Available: 102.43GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11693.40MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 22.16GB, Available: 101.81GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 18 - Allocated: 11693.40MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 22.16GB, Available: 101.81GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17126.30MB, Reserved: 17382.00MB, Max: 23668.00MB
+System Memory - Used: 21.52GB, Available: 102.46GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 18/5666, Loss: 2.014752149581909
+Memory Before optimizer step - Allocated: 22551.55MB, Reserved: 23106.00MB, Max: 23668.00MB
+System Memory - Used: 21.52GB, Available: 102.45GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22551.55MB, Reserved: 23106.00MB, Max: 23668.00MB
+System Memory - Used: 21.52GB, Available: 102.46GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11694.08MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 22.12GB, Available: 101.86GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 19 - Allocated: 11694.08MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 22.05GB, Available: 101.93GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17126.11MB, Reserved: 17382.00MB, Max: 23668.00MB
+System Memory - Used: 21.47GB, Available: 102.51GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 19/5666, Loss: 1.83271324634552
+Memory Before optimizer step - Allocated: 22551.84MB, Reserved: 23076.00MB, Max: 23668.00MB
+System Memory - Used: 21.47GB, Available: 102.50GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22551.84MB, Reserved: 23076.00MB, Max: 23668.00MB
+System Memory - Used: 21.47GB, Available: 102.50GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11693.37MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 22.01GB, Available: 101.97GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 20 - Allocated: 11693.37MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 22.01GB, Available: 101.97GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17125.77MB, Reserved: 17382.00MB, Max: 23668.00MB
+System Memory - Used: 21.48GB, Available: 102.50GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 20/5666, Loss: 2.3931565284729004
+Memory Before optimizer step - Allocated: 22552.21MB, Reserved: 23076.00MB, Max: 23668.00MB
+System Memory - Used: 21.49GB, Available: 102.48GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22552.21MB, Reserved: 23076.00MB, Max: 23668.00MB
+System Memory - Used: 21.51GB, Available: 102.47GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11693.74MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 22.03GB, Available: 101.95GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 21 - Allocated: 11693.74MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 22.03GB, Available: 101.95GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17129.78MB, Reserved: 17402.00MB, Max: 23668.00MB
+System Memory - Used: 21.50GB, Available: 102.47GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 21/5666, Loss: 2.269679069519043
+Memory Before optimizer step - Allocated: 22553.65MB, Reserved: 23168.00MB, Max: 23668.00MB
+System Memory - Used: 21.51GB, Available: 102.47GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22553.65MB, Reserved: 23168.00MB, Max: 23668.00MB
+System Memory - Used: 21.51GB, Available: 102.47GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11695.49MB, Reserved: 11980.00MB, Max: 23668.00MB
+System Memory - Used: 22.09GB, Available: 101.88GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 22 - Allocated: 11695.49MB, Reserved: 11980.00MB, Max: 23668.00MB
+System Memory - Used: 22.09GB, Available: 101.89GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17128.83MB, Reserved: 17384.00MB, Max: 23668.00MB
+System Memory - Used: 21.50GB, Available: 102.47GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 22/5666, Loss: 0.4840075671672821
+Memory Before optimizer step - Allocated: 22552.84MB, Reserved: 23042.00MB, Max: 23668.00MB
+System Memory - Used: 21.64GB, Available: 102.33GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22552.84MB, Reserved: 23042.00MB, Max: 23668.00MB
+System Memory - Used: 21.66GB, Available: 102.31GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11694.37MB, Reserved: 11980.00MB, Max: 23668.00MB
+System Memory - Used: 22.32GB, Available: 101.65GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 23 - Allocated: 11694.37MB, Reserved: 11980.00MB, Max: 23668.00MB
+System Memory - Used: 22.33GB, Available: 101.65GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17126.92MB, Reserved: 17384.00MB, Max: 23668.00MB
+System Memory - Used: 21.98GB, Available: 101.99GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 23/5666, Loss: 2.3397579193115234
+Memory Before optimizer step - Allocated: 22551.19MB, Reserved: 23108.00MB, Max: 23668.00MB
+System Memory - Used: 21.80GB, Available: 102.18GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22551.19MB, Reserved: 23108.00MB, Max: 23668.00MB
+System Memory - Used: 21.79GB, Available: 102.18GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11693.72MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 22.55GB, Available: 101.42GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 24 - Allocated: 11693.72MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 22.56GB, Available: 101.41GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17128.42MB, Reserved: 17386.00MB, Max: 23668.00MB
+System Memory - Used: 21.93GB, Available: 102.05GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 24/5666, Loss: 1.6867340803146362
+Memory Before optimizer step - Allocated: 22553.01MB, Reserved: 23056.00MB, Max: 23668.00MB
+System Memory - Used: 21.96GB, Available: 102.02GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22553.01MB, Reserved: 23056.00MB, Max: 23668.00MB
+System Memory - Used: 21.96GB, Available: 102.01GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11695.54MB, Reserved: 11994.00MB, Max: 23668.00MB
+System Memory - Used: 22.65GB, Available: 101.33GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 25 - Allocated: 11695.54MB, Reserved: 11994.00MB, Max: 23668.00MB
+System Memory - Used: 22.65GB, Available: 101.33GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17127.57MB, Reserved: 17384.00MB, Max: 23668.00MB
+System Memory - Used: 22.69GB, Available: 101.22GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 25/5666, Loss: 2.0594630241394043
+Memory Before optimizer step - Allocated: 22551.84MB, Reserved: 23078.00MB, Max: 23668.00MB
+System Memory - Used: 22.70GB, Available: 101.21GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22551.84MB, Reserved: 23078.00MB, Max: 23668.00MB
+System Memory - Used: 22.70GB, Available: 101.21GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11693.37MB, Reserved: 11980.00MB, Max: 23668.00MB
+System Memory - Used: 23.26GB, Available: 100.65GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 26 - Allocated: 11693.37MB, Reserved: 11980.00MB, Max: 23668.00MB
+System Memory - Used: 23.26GB, Available: 100.65GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17125.84MB, Reserved: 17384.00MB, Max: 23668.00MB
+System Memory - Used: 22.75GB, Available: 101.17GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 26/5666, Loss: 1.7033675909042358
+Memory Before optimizer step - Allocated: 22552.26MB, Reserved: 23078.00MB, Max: 23668.00MB
+System Memory - Used: 22.75GB, Available: 101.16GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22552.26MB, Reserved: 23078.00MB, Max: 23668.00MB
+System Memory - Used: 22.75GB, Available: 101.16GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11693.79MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 23.28GB, Available: 100.63GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 27 - Allocated: 11693.79MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 23.29GB, Available: 100.63GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17125.63MB, Reserved: 17382.00MB, Max: 23668.00MB
+System Memory - Used: 22.71GB, Available: 101.20GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 27/5666, Loss: 2.4154722690582275
+Memory Before optimizer step - Allocated: 22551.86MB, Reserved: 23068.00MB, Max: 23668.00MB
+System Memory - Used: 22.71GB, Available: 101.20GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22551.86MB, Reserved: 23068.00MB, Max: 23668.00MB
+System Memory - Used: 22.71GB, Available: 101.20GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11693.25MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 23.27GB, Available: 100.64GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 28 - Allocated: 11693.25MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 23.27GB, Available: 100.64GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17126.36MB, Reserved: 17382.00MB, Max: 23668.00MB
+System Memory - Used: 22.72GB, Available: 101.19GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 28/5666, Loss: 1.8357582092285156
+Memory Before optimizer step - Allocated: 22551.69MB, Reserved: 23060.00MB, Max: 23668.00MB
+System Memory - Used: 22.73GB, Available: 101.18GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22551.69MB, Reserved: 23060.00MB, Max: 23668.00MB
+System Memory - Used: 22.73GB, Available: 101.19GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11694.22MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 23.32GB, Available: 100.60GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 29 - Allocated: 11694.22MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 23.32GB, Available: 100.60GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17126.10MB, Reserved: 17382.00MB, Max: 23668.00MB
+System Memory - Used: 22.71GB, Available: 101.21GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 29/5666, Loss: 2.01916241645813
+Memory Before optimizer step - Allocated: 22551.75MB, Reserved: 23276.00MB, Max: 23668.00MB
+System Memory - Used: 22.71GB, Available: 101.20GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22551.75MB, Reserved: 23276.00MB, Max: 23668.00MB
+System Memory - Used: 22.71GB, Available: 101.20GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11693.28MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 23.34GB, Available: 100.57GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 30 - Allocated: 11693.28MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 23.34GB, Available: 100.57GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17125.53MB, Reserved: 17382.00MB, Max: 23668.00MB
+System Memory - Used: 22.77GB, Available: 101.14GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 30/5666, Loss: 2.317453384399414
+Memory Before optimizer step - Allocated: 22552.12MB, Reserved: 23276.00MB, Max: 23668.00MB
+System Memory - Used: 22.78GB, Available: 101.14GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22552.12MB, Reserved: 23276.00MB, Max: 23668.00MB
+System Memory - Used: 22.78GB, Available: 101.14GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11693.65MB, Reserved: 11976.00MB, Max: 23668.00MB
+System Memory - Used: 23.28GB, Available: 100.63GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 31 - Allocated: 11693.65MB, Reserved: 11976.00MB, Max: 23668.00MB
+System Memory - Used: 23.28GB, Available: 100.63GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17125.59MB, Reserved: 17380.00MB, Max: 23668.00MB
+System Memory - Used: 22.78GB, Available: 101.13GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 31/5666, Loss: 0.9821724891662598
+Memory Before optimizer step - Allocated: 22551.78MB, Reserved: 23304.00MB, Max: 23668.00MB
+System Memory - Used: 22.79GB, Available: 101.13GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22551.78MB, Reserved: 23304.00MB, Max: 23668.00MB
+System Memory - Used: 22.79GB, Available: 101.13GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11693.31MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 23.29GB, Available: 100.63GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 32 - Allocated: 11693.31MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 23.28GB, Available: 100.63GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17125.62MB, Reserved: 17382.00MB, Max: 23668.00MB
+System Memory - Used: 22.77GB, Available: 101.14GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 32/5666, Loss: 2.661714553833008
+Memory Before optimizer step - Allocated: 22552.15MB, Reserved: 23304.00MB, Max: 23668.00MB
+System Memory - Used: 22.78GB, Available: 101.13GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22552.15MB, Reserved: 23304.00MB, Max: 23668.00MB
+System Memory - Used: 22.78GB, Available: 101.13GB
+CUDA OOM during optimizer step, falling back to CPU optimization
+Moving model to CPU for optimization...
+Clearing CUDA memory before CPU optimization
+Executing CPU-based optimizer step...
+Resetting scaler after CPU fallback
+Memory After optimizer step - Allocated: 11693.68MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 23.29GB, Available: 100.62GB
+Moving LM back to CPU after processing
+Memory freed: 0.00MB
+Memory Start of batch 33 - Allocated: 11693.68MB, Reserved: 11978.00MB, Max: 23668.00MB
+System Memory - Used: 23.29GB, Available: 100.62GB
+Memory freed: 0.00MB
+Processing audio 1/1
+Memory freed: 0.00MB
+Moving LM to GPU for forward pass...
+Preparing text conditions...
+Memory Before micro-batches - Allocated: 17128.17MB, Reserved: 17388.00MB, Max: 23668.00MB
+System Memory - Used: 22.77GB, Available: 101.14GB
+Processing micro-batch 1/1
+Epoch: 0/1, Batch: 33/5666, Loss: 2.394498348236084
+Memory Before optimizer step - Allocated: 22552.64MB, Reserved: 23032.00MB, Max: 23668.00MB
+System Memory - Used: 22.77GB, Available: 101.14GB
+Freeing memory before optimizer step
+Memory After cleanup - Allocated: 22552.64MB, Reserved: 23032.00MB, Max: 23668.00MB
