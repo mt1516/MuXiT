@@ -738,13 +738,15 @@ def single_train(
                 # Update memory tracker
                 memory_tracker.update()
 
-    # Save final model
-    try:
-        print("Saving final model...")
-        save_model = model.lm.cpu() if model.lm.device.type != "cpu" else model.lm
-        torch.save(save_model.state_dict(), f"{save_path}/lm_final.pt")
-    except Exception as e:
-        print(f"Error saving final model: {e}")
+        # Save final model
+        try:
+            print("Saving final model...")
+            # Fix: Check device of parameters instead of accessing device attribute directly
+            param_device = next(model.lm.parameters(), torch.tensor(0)).device.type
+            save_model = model.lm.cpu() if param_device != "cpu" else model.lm
+            torch.save(save_model.state_dict(), f"{save_path}/lm_{epoch}.pt")
+        except Exception as e:
+            print(f"Error saving final model: {e}")
         
     # Report final memory statistics
     memory_tracker.report()
