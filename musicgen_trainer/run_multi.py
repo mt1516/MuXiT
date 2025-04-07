@@ -5,7 +5,6 @@ from train_multi import train_multi
 import gc
 import sys  # Add for debugging info
 from torch.multiprocessing import set_start_method
-import time
 
 try:
     # Set multiprocessing start method to spawn for proper CUDA behavior
@@ -171,20 +170,8 @@ try:
         os.environ['WORLD_SIZE'] = str(len(devices))
         print(f"Configured environment for distributed training with {len(devices)} GPUs")
     
-    # Use a more conservative approach for multi-GPU
-    if len(devices) > 1:
-        print(f"Starting with only a single GPU for stability")
-        # Use only a single GPU to avoid multi-GPU issues entirely
-        devices = devices[:1]  
-        print(f"Limited to just the first GPU for stability: {devices}")
-    
     # Force loading on CPU, but enable GPU for training
     print("Starting training with explicit GPU acceleration...")
-    
-    start_time = time.time()
-    print(f"[TIMELINE] Starting at {time.strftime('%H:%M:%S')}")
-    
-    # Use more conservative settings for stability
     train_multi(
         dataset_path=args.dataset_path,
         model_id=args.model_id,
@@ -197,27 +184,26 @@ try:
         weight_decay=args.weight_decay,
         grad_acc=args.grad_acc,
         warmup_steps=args.warmup_steps,
-        batch_size=1,  # Very small batch size
+        batch_size=per_device_batch_size,  # Pass per-device batch size
         use_cfg=args.use_cfg,
         devices=devices,
         gradient_checkpointing=args.gradient_checkpointing,
         memory_efficient_attention=args.memory_efficient_attention,
-        mixed_precision=None,  # Disable mixed precision to simplify
+        mixed_precision=args.mixed_precision,
         cpu_offload=args.cpu_offload,
         pin_memory=args.pin_memory,
-        force_cpu_loading=True,
-        restore_devices=temp_visible_devices,
+        force_cpu_loading=True,  # Force CPU loading to avoid OOM
+        restore_devices=temp_visible_devices,  # Pass the original devices to be restored
+        # Additional GPU forcing parameters
         force_gpu=True,
-        allow_tf32=True,
-        max_memory_threshold=3.0,  # More conservative memory threshold
-        force_cpu_preprocessing=True,
-        use_distributed=False,  # Use DataParallel for now (simpler)
-        multi_gpu=False,  # Disable multi-GPU temporarily to debug single GPU
+        allow_tf32=True,  # Enable TF32 precision for better performance on Ampere+
+        # Add explicit memory threshold to avoid OOM
+        # max_memory_threshold=5.0,  # GB per GPU
+        # Move more tensor operations to CPU to avoid GPU OOM
+        # force_cpu_preprocessing=True,
+        multi_gpu=len(devices) > 1,  # Enable multi GPU only if we have multiple usable GPUs
+        # use_distributed=len(devices) > 1,  # Use DistributedDataParallel for better performance
     )
-    
-    elapsed = time.time() - start_time
-    print(f"Training completed in {elapsed/60:.1f} minutes")
-    
 finally:
     # Cleanup
     if 'CUDA_LAUNCH_BLOCKING' in os.environ:

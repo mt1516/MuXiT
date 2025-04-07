@@ -1,18 +1,87 @@
 nohup: ignoring input
-2025-04-06 08:36:42.100060: I tensorflow/core/util/port.cc:113] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
-2025-04-06 08:36:42.225865: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+2025-04-06 09:54:48.548964: I tensorflow/core/util/port.cc:113] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+2025-04-06 09:54:48.619317: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
 To enable the following instructions: AVX2 AVX512F AVX512_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
-2025-04-06 08:36:44.197259: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Could not find TensorRT
-INFO:train_multi:[TIMELINE] Starting train_multi at 08:36:52
-INFO:train_multi:GPU 0: NVIDIA GeForce RTX 3090, configured with 16GB
-INFO:train_multi:GPU 1: NVIDIA GeForce RTX 3090, configured with 16GB
-INFO:train_multi:GPU 2: NVIDIA GeForce RTX 3090, configured with 16GB
-INFO:train_multi:GPU 3: NVIDIA GeForce RTX 3090, configured with 16GB
-INFO:train_multi:GPU 4: NVIDIA GeForce RTX 3090, configured with 16GB
-INFO:train_multi:GPU 5: NVIDIA GeForce RTX 3090, configured with 16GB
-INFO:train_multi:GPU 6: NVIDIA GeForce RTX 3090, configured with 16GB
-INFO:train_multi:GPU 7: NVIDIA GeForce RTX 3090, configured with 16GB
-INFO:train_multi:Auto-configured memory map: {0: '16GiB', 1: '16GiB', 2: '16GiB', 3: '16GiB', 4: '16GiB', 5: '16GiB', 6: '16GiB', 7: '16GiB', 'cpu': '64GiB'}
-INFO:train_multi:[TIMELINE] 0.0s: Initializing accelerator with minimal config...
+2025-04-06 09:54:51.120574: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Could not find TensorRT
+INFO:train_multi:Checking memory for GPUs: [0, 1, 2, 3, 4, 5, 6, 7]
+INFO:train_multi:GPU 0: 23.6GB total, 23.6GB free
+INFO:train_multi:GPU 1: 23.6GB total, 23.6GB free
+INFO:train_multi:GPU 2: 23.6GB total, 23.6GB free
+INFO:train_multi:GPU 3: 23.6GB total, 23.6GB free
+INFO:train_multi:GPU 4: 23.6GB total, 23.6GB free
+INFO:train_multi:GPU 5: 23.6GB total, 23.6GB free
+INFO:train_multi:GPU 6: 23.6GB total, 23.6GB free
+INFO:train_multi:GPU 7: 23.6GB total, 23.6GB free
+INFO:train_multi:Auto-configured memory map: {'cpu': '64GiB', 0: '16GiB', 1: '16GiB', 2: '16GiB', 3: '16GiB', 4: '16GiB', 5: '16GiB', 6: '16GiB', 7: '16GiB'}
+INFO:train_multi:Initializing accelerator
 /project/fyp24_ho3/tmtong/miniconda3/envs/muxit/lib/python3.11/site-packages/accelerate/state.py:246: UserWarning: OMP_NUM_THREADS/MKL_NUM_THREADS unset, we set it at 24 to improve oob performance.
   warnings.warn(
+
+---- GPU Diagnostics ----
+CUDA available: True
+CUDA version: 12.1
+PyTorch CUDA version: 12.1
+Device count: 8
+Device 0: NVIDIA GeForce RTX 3090
+  Memory: 25.32 GB
+Device 1: NVIDIA GeForce RTX 3090
+  Memory: 25.32 GB
+Device 2: NVIDIA GeForce RTX 3090
+  Memory: 25.32 GB
+Device 3: NVIDIA GeForce RTX 3090
+  Memory: 25.32 GB
+Device 4: NVIDIA GeForce RTX 3090
+  Memory: 25.32 GB
+Device 5: NVIDIA GeForce RTX 3090
+  Memory: 25.32 GB
+Device 6: NVIDIA GeForce RTX 3090
+  Memory: 25.32 GB
+Device 7: NVIDIA GeForce RTX 3090
+  Memory: 25.32 GB
+
+---- Environment Variables ----
+CUDA_VISIBLE_DEVICES: Not set
+CUDA_DEVICE_ORDER: Not set
+
+Using GPUs:
+  - Model (primary): cuda:0
+  - Data preprocessing: [0, 1, 2, 3, 4, 5, 6, 7]
+Set current CUDA device to: cuda:0
+CUDA confirmed available with 8 devices
+Test tensor created on cuda:0
+Calculated per-device batch size: 1
+Total batch size: 1
+Memory management:
+  - Gradient accumulation steps: 2
+  - Gradient checkpointing: Disabled
+  - Memory efficient attention: Enabled
+  - Mixed precision: bf16
+  - CPU offloading: Enabled
+
+Starting training process with GPU debugging enabled
+Configured environment for distributed training with 8 GPUs
+Starting training with explicit GPU acceleration...
+Training completed, restored CUDA visibility to: 0,1,2,3,4,5,6,7
+Traceback (most recent call last):
+  File "/project/fyp24_ho3/tmtong/MuXiT/musicgen_trainer/run_multi.py", line 175, in <module>
+    train_multi(
+  File "/csproject/fyp24_ho3/tmtong/MuXiT/musicgen_trainer/train_multi.py", line 557, in train_multi
+    accelerator = Accelerator(
+                  ^^^^^^^^^^^^
+  File "/project/fyp24_ho3/tmtong/miniconda3/envs/muxit/lib/python3.11/site-packages/accelerate/accelerator.py", line 415, in __init__
+    self.state = AcceleratorState(
+                 ^^^^^^^^^^^^^^^^^
+  File "/project/fyp24_ho3/tmtong/miniconda3/envs/muxit/lib/python3.11/site-packages/accelerate/state.py", line 861, in __init__
+    PartialState(cpu, **kwargs)
+  File "/project/fyp24_ho3/tmtong/miniconda3/envs/muxit/lib/python3.11/site-packages/accelerate/state.py", line 252, in __init__
+    torch.distributed.init_process_group(backend=self.backend, **kwargs)
+  File "/project/fyp24_ho3/tmtong/miniconda3/envs/muxit/lib/python3.11/site-packages/torch/distributed/c10d_logger.py", line 74, in wrapper
+    func_return = func(*args, **kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/project/fyp24_ho3/tmtong/miniconda3/envs/muxit/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py", line 1148, in init_process_group
+    default_pg, _ = _new_process_group_helper(
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/project/fyp24_ho3/tmtong/miniconda3/envs/muxit/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py", line 1264, in _new_process_group_helper
+    backend_class = ProcessGroupGloo(backend_prefix_store, group_rank, group_size, timeout=timeout)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Socket Timeout
