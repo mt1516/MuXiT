@@ -148,8 +148,7 @@ def preprocess_audio(audio_path, model: MusicGen, duration: int = 15):
 
         # Process audio in smaller chunks if needed
         def encode_audio(wav_tensor):
-            # Convert to half precision before moving to GPU
-            wav_gpu = wav_tensor.half().cuda()
+            wav_gpu = wav_tensor.cuda()
             wav_gpu = wav_gpu.unsqueeze(0)
             
             with torch.no_grad():
@@ -282,8 +281,7 @@ def single_train(
     use_cpu_offload: int = 1,
     memory_efficient: int = 1,
     memory_fraction: float = 0.98,
-    audio_duration: int = 15,  # Reduced from 30 seconds to save memory
-    low_memory_mode: bool = True  # New parameter for extreme memory savings
+    audio_duration: int = 5,  # Reduced from 30 seconds to save memory
 ):
     # Initialize memory tracker
     memory_tracker = MemoryTracker()
@@ -316,16 +314,8 @@ def single_train(
 
     print(f"Loading MusicGen model '{model_id}'...")
     
-    # Try using a smaller model if specified
-    if low_memory_mode and model_id == "small":
-        print("Low memory mode enabled, trying to use 'tiny' model instead")
-        try:
-            model = MusicGen.get_pretrained("tiny")
-        except:
-            print("Tiny model not available, falling back to small")
-            model = MusicGen.get_pretrained(model_id)
-    else:
-        model = MusicGen.get_pretrained(model_id)
+    # Load the MusicGen model
+    model = MusicGen.get_pretrained(model_id)
     
     # Move compression model to device for audio processing
     print("Moving compression model to CUDA...")
@@ -346,8 +336,7 @@ def single_train(
             training_model = training_model.to("cpu")
         params_to_optimize = training_model.parameters()
     
-    # Use lower precision for model
-    model.lm = model.lm.half() if low_memory_mode else model.lm.to(torch.float32)
+    model.lm = model.lm.to(torch.float32)
 
     print(f"Loading dataset from {dataset_path}...")
     dataset = AudioDataset(dataset_path, no_label=no_label)
