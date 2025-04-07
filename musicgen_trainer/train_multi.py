@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
 from accelerate import Accelerator
+from accelerate.logging import get_logger
 from transformers import get_scheduler
 from tqdm.auto import tqdm
 import wandb
@@ -513,71 +514,53 @@ def train_multi(
     # Add the missing parameters with appropriate defaults
     force_gpu=False,
     allow_tf32=False,
-    max_memory_threshold=5.0,
-    force_cpu_preprocessing=False,
-    use_distributed=False,
 ):
+    global logger
+    # Set up logging
     # Create offload directory if needed
     if cpu_offload and offload_dir:
         os.makedirs(offload_dir, exist_ok=True)
     
-    # Add debug timestamp
-    debug_start_time = time.time()
-    logger.info(f"[TIMELINE] Starting train_multi at {time.strftime('%H:%M:%S')}")
-    
     # Set environment variable to avoid memory fragmentation
     os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
     
-    # Properly initialize multi-GPU flag - but don't set up yet
-    is_multi_gpu = False
-    can_use_multi_gpu = multi_gpu and devices and len(devices) > 1
+    # REMOVED: Multi-GPU setup code - moved to after model loading
     
-    if can_use_multi_gpu:
-        logger.info(f"Will attempt to set up multi-GPU training with {len(devices)} devices: {devices} after model loading")
-    
-    # Set max memory mapping for all available GPUs, not just GPU 0
+    # Set max memory mapping - handle all GPUs, not just GPU 0
     if max_memory is None and torch.cuda.is_available():
-        max_memory = {}
+        max_memory = {"cpu": "64GiB"}  # Default CPU memory
         
-        # Configure memory for all available GPUs
-        for i in range(torch.cuda.device_count()):
-            try:
-                # Get memory info for this GPU
-                props = torch.cuda.get_device_properties(i)
-                total_mem = props.total_memory / (1024**3)
-                allocated = torch.cuda.memory_allocated(i) / (1024**3)
-                free_mem = total_mem - allocated
-                
-                # Only use GPUs with enough free memory
-                if free_mem > max_memory_threshold:
-                    # Use a conservative percentage of available memory
-                    safe_mem = int(min(total_mem * 0.7, free_mem * 0.9))
-                    max_memory[i] = f"{safe_mem}GiB"
-                    logger.info(f"GPU {i}: {props.name}, configured with {safe_mem}GB")
-                else:
-                    logger.warning(f"GPU {i}: {props.name} has only {free_mem:.1f}GB free, below threshold")
-            except Exception as e:
-                logger.error(f"Error checking GPU {i}: {e}")
+        # Get devices to check - either from devices parameter or all available
+        gpus_to_check = devices if devices else list(range(torch.cuda.device_count()))
+        logger.info(f"Checking memory for GPUs: {gpus_to_check}")
         
-        # Always include CPU memory configuration
-        max_memory["cpu"] = "64GiB"
+        for gpu_id in gpus_to_check:
+            # Calculate available memory for each GPU
+            available_mem = torch.cuda.get_device_properties(gpu_id).total_memory / 1024**3
+            
+            # Get current reserved memory (a better estimate than allocated memory)
+            torch.cuda.set_device(gpu_id)  # Set device context for memory check
+            free_mem = torch.cuda.memory_reserved(gpu_id) / 1024**3
+            free_mem = available_mem - free_mem  # Calculate actual free memory
+            
+            logger.info(f"GPU {gpu_id}: {available_mem:.1f}GB total, {free_mem:.1f}GB free")
+            
+            # Use a conservative value based on currently available memory
+            safe_mem = min(available_mem * 0.7, free_mem * 0.9) if free_mem > 0 else available_mem * 0.7
+            max_memory[gpu_id] = f"{int(safe_mem)}GiB"
+        
         logger.info(f"Auto-configured memory map: {max_memory}")
     
-    # PROBLEM: Initializing accelerator seems to hang. Try disabling it or using a minimal configuration
-    logger.info(f"[TIMELINE] {time.time() - debug_start_time:.1f}s: Initializing accelerator with minimal config...")
-    try:
-        # Use a very minimal accelerator config to avoid potential issues
-        accelerator = Accelerator(
-            gradient_accumulation_steps=grad_acc,
-            mixed_precision=None,  # Disable mixed precision to simplify
-            device_placement=False,  # Don't let accelerator handle device placement
-            cpu=force_cpu_loading
-        )
-        logger.info(f"[TIMELINE] {time.time() - debug_start_time:.1f}s: Accelerator initialized")
-    except Exception as e:
-        logger.error(f"Failed to initialize accelerator: {e}")
-        logger.warning("Will proceed without accelerator")
-        accelerator = None
+    # Initialize accelerator with compatible parameters
+    logger.info("Initializing accelerator")
+    logger = get_logger(__name__)
+    accelerator = Accelerator(
+        gradient_accumulation_steps=grad_acc,
+        mixed_precision=mixed_precision,
+        device_placement=True,
+        cpu=force_cpu_loading,  # Start with CPU if needed
+    )
+    logger.info("Accelerator initialized")
     
     # Log CPU offloading status
     if cpu_offload:
@@ -590,17 +573,14 @@ def train_multi(
     # Explicitly disable GPU access during loading phase if force_cpu_loading
     original_visible_devices = os.environ.get('CUDA_VISIBLE_DEVICES', '')
     if force_cpu_loading:
-        logger.info(f"[TIMELINE] {time.time() - debug_start_time:.1f}s: Temporarily hiding GPUs for CPU loading")
         os.environ['CUDA_VISIBLE_DEVICES'] = ''
         
     try:
         # Load model on CPU first if requested
-        logger.info(f"[TIMELINE] {time.time() - debug_start_time:.1f}s: Starting model loading...")
         if force_cpu_loading:
             model = load_model_on_cpu(model_id)
             # Restore GPU access after loading
             if original_visible_devices is not None:
-                logger.info(f"[TIMELINE] {time.time() - debug_start_time:.1f}s: Restoring GPU visibility to {original_visible_devices}")
                 os.environ['CUDA_VISIBLE_DEVICES'] = original_visible_devices
         else:
             # Load model using standard approach
@@ -615,8 +595,6 @@ def train_multi(
             else:
                 model = model_id
                 logger.info("Using provided model instance")
-        
-        logger.info(f"[TIMELINE] {time.time() - debug_start_time:.1f}s: Model loading completed")
     except Exception as e:
         logger.error(f"Error loading model: {e}")
         logger.warning("Falling back to CPU loading after error")
@@ -624,52 +602,11 @@ def train_multi(
             os.environ['CUDA_VISIBLE_DEVICES'] = original_visible_devices
         model = load_model_on_cpu(model_id)
     
-    # Move multi-GPU setup to AFTER model is loaded
-    # Now we can set up multi-GPU since model is defined
-    logger.info(f"[TIMELINE] {time.time() - debug_start_time:.1f}s: Setting up multi-GPU...")
-    if can_use_multi_gpu:
-        logger.info(f"Setting up multi-GPU training with {len(devices)} devices: {devices}")
-        try:
-            # First check if we can use DistributedDataParallel
-            if use_distributed:
-                logger.info("Attempting to use DistributedDataParallel")
-                # Implementation for DistributedDataParallel would go here
-                is_multi_gpu = False  # Not implemented yet
-            
-            # Fall back to DataParallel if distributed fails
-            if not is_multi_gpu and hasattr(model, 'lm') and isinstance(model.lm, nn.Module):
-                # For MusicGen, wrap each component separately with DataParallel
-                logger.info("Setting up DataParallel for MusicGen components")
-                
-                # Wrap LM with DataParallel
-                logger.info(f"[TIMELINE] {time.time() - debug_start_time:.1f}s: Wrapping model.lm with DataParallel")
-                if hasattr(model, 'lm') and isinstance(model.lm, nn.Module):
-                    # Move lm to CPU before DataParallel to avoid hang
-                    model.lm = model.lm.cpu()
-                    model.lm = nn.DataParallel(model.lm, device_ids=devices)
-                    logger.info(f"Wrapped model.lm with DataParallel across devices {devices}")
-                
-                # Wrap compression_model with DataParallel
-                logger.info(f"[TIMELINE] {time.time() - debug_start_time:.1f}s: Wrapping model.compression_model with DataParallel")
-                if hasattr(model, 'compression_model') and isinstance(model.compression_model, nn.Module):
-                    # Move compression_model to CPU before DataParallel to avoid hang
-                    model.compression_model = model.compression_model.cpu()
-                    model.compression_model = nn.DataParallel(model.compression_model, device_ids=devices)
-                    logger.info(f"Wrapped model.compression_model with DataParallel across devices {devices}")
-                
-                is_multi_gpu = True
-            elif not is_multi_gpu:
-                logger.warning("Could not set up multi-GPU training with DataParallel")
-        except Exception as e:
-            logger.error(f"Failed to set up multi-GPU training: {e}")
-            is_multi_gpu = False
-        
-        if is_multi_gpu:
-            logger.info("Successfully set up multi-GPU training")
-            # Adjust batch size for multi-GPU
-            logger.info(f"Using batch size {batch_size} per device across {len(devices)} devices")
-        else:
-            logger.warning("Multi-GPU setup failed, falling back to single GPU")
+    # ADDED: Set up multi-GPU environment after model is loaded
+    is_multi_gpu = False
+    if multi_gpu and devices and len(devices) > 1:
+        model, is_multi_gpu = setup_multi_gpu(model)
+        logger.info(f"Multi-GPU setup complete: {is_multi_gpu}")
     
     # Set a fixed random seed for reproducibility
     seed = 42
@@ -678,7 +615,6 @@ def train_multi(
         torch.cuda.manual_seed_all(seed)
     
     # Force PyTorch to use CUDA if available, but don't change defaults
-    logger.info(f"[TIMELINE] {time.time() - debug_start_time:.1f}s: Setting up CUDA devices...")
     if torch.cuda.is_available():
         # Enable cuDNN benchmark for improved GPU performance
         torch.backends.cudnn.benchmark = True
@@ -694,10 +630,10 @@ def train_multi(
         
     # CRITICAL: Restore GPU visibility BEFORE creating the accelerator
     if restore_devices:
-        logger.info(f"[TIMELINE] {time.time() - debug_start_time:.1f}s: Restoring GPU visibility to: {restore_devices}")
+        logger.info(f"Restoring GPU visibility to: {restore_devices}")
         os.environ['CUDA_VISIBLE_DEVICES'] = restore_devices
     elif original_visible_devices:
-        logger.info(f"[TIMELINE] {time.time() - debug_start_time:.1f}s: Restoring original GPU visibility: {original_visible_devices}")
+        logger.info(f"Restoring original GPU visibility: {original_visible_devices}")
         os.environ['CUDA_VISIBLE_DEVICES'] = original_visible_devices
     
     # Verify CUDA is available after restoration
@@ -708,223 +644,13 @@ def train_multi(
     else:
         logger.error("CUDA is still not available after restoring devices! Check your environment.")
         
-    # Use a more direct approach for model placement if accelerator initialization fails
-    if not accelerator:
-        logger.info("Using direct PyTorch device placement instead of accelerator")
-        default_device = f"cuda:{devices[0]}" if torch.cuda.is_available() and devices else "cpu"
-        logger.info(f"Using {default_device} as primary device")
-        
-        # Create a simple substitute for accelerator.device
-        device = torch.device(default_device)
-        
-        # Simple class to mimic accelerator.prepare()
-        class SimpleAccelerator:
-            def __init__(self, device):
-                self.device = device
-            
-            def prepare(self, *args):
-                return args
-            
-            def backward(self, loss):
-                loss.backward()
-            
-            @contextmanager
-            def accumulate(self, model):
-                yield
-            
-            def unwrap_model(self, model):
-                return model
-            
-            def wait_for_everyone(self):
-                pass
-            
-            def save(self, obj, path):
-                torch.save(obj, path)
-            
-            def main_process_first(self):
-                @contextmanager
-                def _dummy_context():
-                    yield
-                return _dummy_context()
-            
-            def save_state(self, output_dir):
-                os.makedirs(output_dir, exist_ok=True)
-                if hasattr(model, 'state_dict'):
-                    torch.save(model.state_dict(), os.path.join(output_dir, "model.pt"))
-                else:
-                    logger.warning("Model has no state_dict method, saving whole model")
-                    torch.save(model, os.path.join(output_dir, "model.pt"))
-        
-        accelerator = SimpleAccelerator(device)
-        
-    # Apply memory optimizations
-    logger.info(f"[TIMELINE] {time.time() - debug_start_time:.1f}s: Applying memory optimizations...")
-    if gradient_checkpointing:
-        try:
-            model.enable_gradient_checkpointing()
-            logger.info("Gradient checkpointing enabled")
-        except Exception as e:
-            logger.warning(f"Failed to enable gradient checkpointing: {e}")
-    
-    # Handle memory efficient attention based on actual model structure
-    if memory_efficient_attention:
-        try:
-            # Check if the model has this method or if we need to access components
-            if hasattr(model, "use_efficient_attention"):
-                model.use_efficient_attention()
-                logger.info("Memory efficient attention enabled")
-            elif hasattr(model, "lm") and hasattr(model.lm, "transformer"):
-                # Try to set attention mechanism on transformer model
-                logger.info("Attempting to enable efficient attention on transformer component")
-                # This is just a placeholder - actual implementation depends on model structure
-                # model.lm.transformer.use_flash_attention = True
-            else:
-                logger.warning("Could not identify components to enable memory efficient attention")
-        except Exception as e:
-            logger.warning(f"Failed to enable memory efficient attention: {e}")
-    
-    # Freeze text encoder if not tuning text - adapted for actual model structure
-    if not tune_text:
-        try:
-            # Use the safer method to find text components
-            text_components = find_text_components(model)
-            
-            if text_components:
-                for path, component in text_components:
-                    logger.info(f"Freezing parameters for {path}")
-                    for param in component.parameters():
-                        param.requires_grad = False
-            else:
-                logger.warning("Could not identify text encoder components. All parameters will be tuned.")
-        except Exception as e:
-            logger.warning(f"Error while trying to freeze text encoder: {e}")
-            logger.warning("Proceeding with all parameters unfrozen")
-
-    # Properly configure the DataLoader's generator
-    # FIXED: Always use CPU generator for DataLoader to avoid device type mismatch
-    generator = torch.Generator()  # CPU generator is always safe
-    generator.manual_seed(seed)
-    logger.info("Using CPU random number generator for DataLoader")
-    
-    # Prepare dataset
-    logger.info(f"[TIMELINE] {time.time() - debug_start_time:.1f}s: Preparing dataset...")
-    dataset = MusicDataset(dataset_path, no_label=bool(no_label))
-    
-    # Use a smaller number of workers to reduce memory pressure
-    num_workers = 1 if cpu_offload else 2
-    dataloader = DataLoader(
-        dataset,
-        batch_size=batch_size,
-        shuffle=True,
-        num_workers=num_workers,
-        pin_memory=bool(pin_memory),
-        collate_fn=lambda b: collate_fn(b, model),
-        persistent_workers=False,  # Disable persistent workers to save memory
-        generator=generator  # Use CPU generator
+    # Re-initialize accelerator WITH gpu placement and WITHOUT cpu flag
+    accelerator = Accelerator(
+        gradient_accumulation_steps=grad_acc,
+        mixed_precision=mixed_precision,
+        device_placement=True,
+        cpu=False,  # Critical: Do not force CPU for training
     )
-    logger.info(f"[TIMELINE] {time.time() - debug_start_time:.1f}s: Dataset and DataLoader created")
-    
-    # Identify trainable parameters
-    logger.info(f"[TIMELINE] {time.time() - debug_start_time:.1f}s: Identifying trainable parameters...")
-    try:
-        trainable_params = get_trainable_parameters(model)
-        logger.info(f"[TIMELINE] {time.time() - debug_start_time:.1f}s: Found {len(trainable_params)} trainable parameters")
-    except Exception as e:
-        logger.error(f"Error getting trainable parameters: {e}")
-        # Fallback to simple parameters()
-        logger.warning("Falling back to all parameters")
-        if hasattr(model, 'lm'):
-            trainable_params = list(model.lm.parameters())
-        else:
-            trainable_params = list(model.parameters())
-    
-    # Setup optimizer
-    logger.info(f"[TIMELINE] {time.time() - debug_start_time:.1f}s: Setting up optimizer...")
-    # Setup optimizer with memory considerations
-    if use_8bit and torch.cuda.is_available():
-        try:
-            import bitsandbytes as bnb
-            optimizer = bnb.optim.AdamW8bit(
-                trainable_params,
-                lr=lr,
-                weight_decay=weight_decay
-            )
-            logger.info("Using 8-bit AdamW optimizer")
-        except ImportError:
-            logger.warning("bitsandbytes not installed, falling back to regular AdamW")
-            optimizer = optim.AdamW(
-                trainable_params,
-                lr=lr,
-                weight_decay=weight_decay
-            )
-    else:
-        optimizer = optim.AdamW(
-            trainable_params,
-            lr=lr,
-            weight_decay=weight_decay
-        )
-    
-    # Setup scheduler
-    num_training_steps = len(dataloader) * epochs // grad_acc
-    lr_scheduler = get_scheduler(
-        name="linear",
-        optimizer=optimizer,
-        num_warmup_steps=warmup_steps,
-        num_training_steps=num_training_steps
-    )
-    
-    # Setup wandb
-    if use_wandb:
-        wandb.init(
-            project="musicgen-finetune",
-            config={
-                "model_id": model_id if isinstance(model_id, str) else "custom_model",
-                "lr": lr,
-                "epochs": epochs,
-                "batch_size": batch_size,
-                "grad_acc": grad_acc,
-                "tune_text": tune_text,
-                "weight_decay": weight_decay,
-                "warmup_steps": warmup_steps,
-                "cpu_offload": cpu_offload,
-                "mixed_precision": mixed_precision,
-            }
-        )
-    
-    # Ensure model components are on the correct device before accelerator preparation
-    logger.info(f"[TIMELINE] {time.time() - debug_start_time:.1f}s: Moving model to device before accelerator preparation...")
-    if torch.cuda.is_available():
-        try:
-            if hasattr(model, 'lm'):
-                logger.info(f"Moving model.lm parameters to device (first few only to avoid deadlock)")
-                # Just move a few params to test if it works
-                for i, param in enumerate(model.lm.parameters()):
-                    if i < 5:  # Only move first 5 params to avoid potential hang
-                        param.data = param.data.cuda()
-                    else:
-                        break
-            if hasattr(model, 'compression_model'):
-                logger.info(f"Moving model.compression_model parameters to device (first few only to avoid deadlock)")
-                # Just move a few params to test if it works
-                for i, param in enumerate(model.compression_model.parameters()):
-                    if i < 5:  # Only move first 5 params to avoid potential hang
-                        param.data = param.data.cuda()
-                    else:
-                        break
-        except Exception as e:
-            logger.error(f"Error pre-moving model components: {e}")
-    
-    # Prepare model with accelerator
-    logger.info(f"[TIMELINE] {time.time() - debug_start_time:.1f}s: Preparing model with accelerator...")
-    logger.info("CRITICAL STEP: Calling accelerator.prepare(), may take some time...")
-    try:
-        model, optimizer, dataloader, lr_scheduler = accelerator.prepare(
-            model, optimizer, dataloader, lr_scheduler
-        )
-        logger.info(f"[TIMELINE] {time.time() - debug_start_time:.1f}s: Accelerator preparation complete")
-    except Exception as e:
-        logger.error(f"Error during accelerator preparation: {e}")
-        raise
     
     log_memory_usage()
     
