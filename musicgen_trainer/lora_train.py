@@ -120,9 +120,10 @@ def one_hot_encode(tensor, num_classes=2048):
     return one_hot
 
 
-def setup_ddp(rank):
+def setup_ddp(rank, init_process_group=True):
     """Initialize the distributed training environment."""
-    dist.init_process_group("nccl", rank=rank, world_size=torch.cuda.device_count())
+    if init_process_group:
+        dist.init_process_group("nccl", rank=rank, world_size=torch.cuda.device_count())
     torch.cuda.set_device(rank)
 
 
@@ -154,9 +155,9 @@ def apply_lora(
     if isinstance(target_modules, str):
         target_modules = get_lora_target_modules(model, target_modules)
     
-    # Save original state dict for later reference
-    model.original_state_dict = {k: v.clone() if isinstance(v, torch.Tensor) else v 
-                                for k, v in model.state_dict().items()}
+    # Instead of cloning the entire state dict, just keep track of target modules
+    # This saves GPU memory by avoiding a full model state copy
+    model._lora_target_modules = target_modules
     
     print(f"Target modules for LoRA: {target_modules}")
     
@@ -188,7 +189,7 @@ def apply_lora(
                 # Check if already modified - skip if already done
                 if hasattr(module, "lora_A"):
                     continue
-                    
+                
                 # Add LoRA modules and ensure they're on the same device as the module
                 lora_A = nn.Linear(module.in_features, lora_r, bias=False).to(device)
                 lora_B = nn.Linear(lora_r, module.out_features, bias=False).to(device)
@@ -273,14 +274,19 @@ def train(
     lora_dropout: float = 0.1,
     use_multi_gpu: bool = False,
     cpu_offload: bool = False,
-    target_modules: str = "all"
+    target_modules: str = "all",
+    init_process_group: bool = True
 ):
     # Set up distributed training if requested
     is_distributed = use_multi_gpu and torch.cuda.device_count() > 1
     rank = 0
     
     if is_distributed:
-        setup_ddp(rank)
+        # Get local rank if in distributed mode
+        if dist.is_initialized():
+            rank = dist.get_rank()
+        setup_ddp(rank, init_process_group=init_process_group)
+        print(f"Process {rank} using GPU: {torch.cuda.current_device()} ({torch.cuda.get_device_name(rank)})")
     
     # Initialize wandb if requested
     if use_wandb and (not is_distributed or rank == 0):
@@ -293,10 +299,20 @@ def train(
         })
 
     # Load model and move it to the appropriate device
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = MusicGen.get_pretrained(model_id)
-    model.lm = model.lm.to(device)  # Ensure the model is on the GPU
-    model.lm = model.lm.to(torch.float32)  # Convert to float32
+    device = torch.device(f"cuda:{rank}" if torch.cuda.is_available() else "cpu")
+    print(f"Process {rank} loading model on {device}")
+    
+    # Use a memory-efficient approach to load the model on the specific GPU
+    with torch.cuda.device(device):
+        # Clear any existing cache to make room for the model
+        torch.cuda.empty_cache()
+        
+        # Load model
+        model = MusicGen.get_pretrained(model_id)
+        
+        # Move model components to correct device
+        model.lm = model.lm.to(device)
+        model.lm = model.lm.to(torch.float32)  # Convert to float32
     
     # Apply LoRA to the language model
     print(f"Applying LoRA with r={lora_r}, alpha={lora_alpha}, dropout={lora_dropout}")

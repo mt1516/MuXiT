@@ -1,4 +1,6 @@
 import os
+# Explicitly set only GPUs 5 and 7 to be visible to PyTorch
+os.environ["CUDA_VISIBLE_DEVICES"] = "5,7"  # Specify the GPUs to use
 import sys
 import torch
 import torch.distributed as dist
@@ -6,16 +8,20 @@ import torch.multiprocessing as mp
 import argparse
 from lora_train import train, setup_ddp
 
-
 def run_distributed(rank, world_size, args):
     """Run training on a specific GPU rank."""
-    # Set device for this process
+    # Set device for this process - use local rank for current process
     os.environ['MASTER_ADDR'] = 'localhost'
-    os.environ['MASTER_PORT'] = '12355'
+    os.environ['MASTER_PORT'] = '12356'
     
     # Initialize the distributed environment
     dist.init_process_group("nccl", rank=rank, world_size=world_size)
+    
+    # Map rank to the correct GPU ID - ensures each process gets its own GPU
+    # rank is local rank (0, 1, etc.) within the available GPUs 5 and 7
     torch.cuda.set_device(rank)
+    
+    print(f"Process {rank} using GPU {rank} (CUDA index: {torch.cuda.current_device()}, Device: {torch.cuda.get_device_name(rank)})")
     
     # Only display on first GPU
     is_main = rank == 0
@@ -39,7 +45,8 @@ def run_distributed(rank, world_size, args):
         lora_dropout=args.lora_dropout,
         use_multi_gpu=True,  # Already in distributed mode
         cpu_offload=args.cpu_offload,
-        target_modules=args.target_modules
+        target_modules=args.target_modules,
+        init_process_group=False
     )
     
     # Cleanup
@@ -76,12 +83,17 @@ def main():
     
     args = parser.parse_args()
     
-    # Check available GPUs
+    # We're explicitly setting to use GPUs 5 and 7 via CUDA_VISIBLE_DEVICES
+    # So there should be exactly 2 GPUs visible to PyTorch
     world_size = torch.cuda.device_count()
+    print(f"Using {world_size} GPUs for training. Visible devices: {os.environ['CUDA_VISIBLE_DEVICES']}")
     
-    if world_size < 2:
+    if world_size < 1:
+        print("No GPUs detected. Please ensure your environment is properly configured.")
+        return
+    elif world_size == 1:
         print("Only 1 GPU detected. Running in single GPU mode.")
-        os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+        # No need to spawn processes for single GPU
         train(
             dataset_path=args.dataset_path,
             model_id=args.model_id,
@@ -105,10 +117,6 @@ def main():
         )
     else:
         print(f"Found {world_size} GPUs. Running distributed training.")
-        # Remove any specific GPU selection as we're managing it through distribution
-        if "CUDA_VISIBLE_DEVICES" in os.environ:
-            del os.environ["CUDA_VISIBLE_DEVICES"]
-        
         # Launch a process for each GPU
         mp.spawn(
             run_distributed,
