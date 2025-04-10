@@ -1,5 +1,6 @@
 audiocraft_code/
 FMA_data/
+models/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

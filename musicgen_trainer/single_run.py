@@ -1,6 +1,6 @@
 import os
 # Set memory limits before importing torch
-os.environ["CUDA_VISIBLE_DEVICES"] = "7"
+os.environ["CUDA_VISIBLE_DEVICES"] = "5"
 # Configure memory allocator to limit memory usage and reduce fragmentation
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:64,garbage_collection_threshold:0.6"
 
@@ -27,6 +27,7 @@ parser.add_argument('--memory_efficient', type=int, required=False, default=1)
 parser.add_argument('--use_scaler', type=bool, required=False, default=True)
 parser.add_argument('--memory_fraction', type=float, required=False, default=0.98)
 parser.add_argument('--audio_duration', type=int, required=False, default=10)
+parser.add_argument('--existing_model', type=str, required=False, default=None)
 args = parser.parse_args()
 
 single_train(
@@ -48,4 +49,5 @@ single_train(
     use_scaler=args.use_scaler,
     memory_fraction=args.memory_fraction,
     audio_duration=args.audio_duration,
+    existing_model=args.existing_model,
 )
