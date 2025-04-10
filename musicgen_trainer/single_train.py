@@ -335,6 +335,7 @@ def single_train(
     memory_efficient: int = 1,
     memory_fraction: float = 0.98,
     audio_duration: int = 5,  # Reduced from 30 seconds to save memory
+    existing_model: str = None,
 ):
     # Initialize memory tracker
     memory_tracker = MemoryTracker()
@@ -369,6 +370,9 @@ def single_train(
     
     # Load the MusicGen model
     model = MusicGen.get_pretrained(model_id)
+    if existing_model is not None:
+        model.lm.load_state_dict(torch.load(existing_model))
+        print(f"Loaded existing model from {existing_model}")
     
     # Move compression model to device for audio processing
     print("Moving compression model to CUDA...")
@@ -388,6 +392,7 @@ def single_train(
         if use_cpu_offload:
             training_model = training_model.to("cpu")
         params_to_optimize = training_model.parameters()
+    
     
     model.lm = model.lm.to(torch.float32)
 
