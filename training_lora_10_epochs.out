@@ -1,136 +1,220 @@
 nohup: ignoring input
-2025-04-10 13:18:09.532762: I tensorflow/core/util/port.cc:113] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
-2025-04-10 13:18:09.640873: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+2025-04-10 17:51:42.658077: I tensorflow/core/util/port.cc:113] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+2025-04-10 17:51:42.703117: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
 To enable the following instructions: AVX2 AVX512F AVX512_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
-2025-04-10 13:18:12.020587: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Could not find TensorRT
+2025-04-10 17:51:44.002448: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Could not find TensorRT
 /project/fyp24_ho3/tmtong/miniconda3/envs/muxit/lib/python3.11/site-packages/transformers/models/encodec/modeling_encodec.py:124: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.clone().detach() or sourceTensor.clone().detach().requires_grad_(True), rather than torch.tensor(sourceTensor).
   self.register_buffer("padding_total", torch.tensor(kernel_size - stride, dtype=torch.int64), persistent=False)
+Using GPUs: [0, 1, 2, 3, 4, 5, 6, 7]
+Using logical GPU indices: [0, 1, 2, 3, 4, 5, 6, 7]
+Mapped devices: [device(type='cuda', index=0), device(type='cuda', index=1), device(type='cuda', index=2), device(type='cuda', index=3), device(type='cuda', index=4), device(type='cuda', index=5), device(type='cuda', index=6), device(type='cuda', index=7)]
+Loading MusicGen model 'facebook/musicgen-stereo-melody'...
+Converting model components to float32 for consistent computation...
+Creating model-parallel version of the language model...
+Model parallel using devices: [device(type='cuda', index=0), device(type='cuda', index=1), device(type='cuda', index=2), device(type='cuda', index=3), device(type='cuda', index=4), device(type='cuda', index=5), device(type='cuda', index=6), device(type='cuda', index=7)]
+Distributed 48 transformer layers across 8 devices
+Device 0 (cuda:0): 6 layers
+Device 1 (cuda:1): 6 layers
+Device 2 (cuda:2): 6 layers
+Device 3 (cuda:3): 6 layers
+Device 4 (cuda:4): 6 layers
+Device 5 (cuda:5): 6 layers
+Device 6 (cuda:6): 6 layers
+Device 7 (cuda:7): 6 layers
 Applying LoRA with r=16, alpha=32.0, dropout=0.1
 Target modules for LoRA: ['out_proj']
 Added LoRA modules! Trainable params: 2,359,296 (2.083333% of total 113,246,208)
-Tuning language model with LoRA
-Epoch: 0/10, Batch: 0/5666, Loss: 4.892578, Grad Norm: 0.352113
-Epoch: 0/10, Batch: 1/5666, Loss: 4.490609, Grad Norm: 0.279031
-Epoch: 0/10, Batch: 2/5666, Loss: 4.108094, Grad Norm: 0.374930
-Epoch: 0/10, Batch: 3/5666, Loss: 4.709674, Grad Norm: 0.311632
-Epoch: 0/10, Batch: 4/5666, Loss: 3.628158, Grad Norm: 0.311206
-Epoch: 0/10, Batch: 5/5666, Loss: 3.525675, Grad Norm: 0.330829
-Epoch: 0/10, Batch: 6/5666, Loss: 3.142745, Grad Norm: 0.488043
-Epoch: 0/10, Batch: 7/5666, Loss: 4.540822, Grad Norm: 0.310835
-Epoch: 0/10, Batch: 8/5666, Loss: 2.815220, Grad Norm: 0.449947
-Epoch: 0/10, Batch: 9/5666, Loss: 4.805210, Grad Norm: 0.320323
-Epoch: 0/10, Batch: 10/5666, Loss: 4.324750, Grad Norm: 0.361963
-Epoch: 0/10, Batch: 11/5666, Loss: 5.258954, Grad Norm: 0.378582
-Epoch: 0/10, Batch: 12/5666, Loss: 2.729014, Grad Norm: 0.310855
-Epoch: 0/10, Batch: 13/5666, Loss: 3.301200, Grad Norm: 0.408653
-Epoch: 0/10, Batch: 14/5666, Loss: 3.216322, Grad Norm: 0.283579
-Epoch: 0/10, Batch: 15/5666, Loss: 4.823819, Grad Norm: 0.345050
-Epoch: 0/10, Batch: 16/5666, Loss: 4.875947, Grad Norm: 0.312192
-Epoch: 0/10, Batch: 17/5666, Loss: 3.162962, Grad Norm: 0.293161
-Epoch: 0/10, Batch: 18/5666, Loss: 5.120352, Grad Norm: 0.334236
-Epoch: 0/10, Batch: 19/5666, Loss: 2.661894, Grad Norm: 0.387354
-Epoch: 0/10, Batch: 20/5666, Loss: 1.339377, Grad Norm: 0.391651
-Epoch: 0/10, Batch: 21/5666, Loss: 3.607922, Grad Norm: 0.322052
-Epoch: 0/10, Batch: 22/5666, Loss: 3.248819, Grad Norm: 0.306692
-Epoch: 0/10, Batch: 23/5666, Loss: 4.156399, Grad Norm: 0.368030
-Epoch: 0/10, Batch: 24/5666, Loss: 2.936976, Grad Norm: 0.341769
-Epoch: 0/10, Batch: 25/5666, Loss: 3.823460, Grad Norm: 0.419820
-Epoch: 0/10, Batch: 26/5666, Loss: 3.677278, Grad Norm: 0.269173
-Epoch: 0/10, Batch: 27/5666, Loss: 4.704458, Grad Norm: 0.306937
-Epoch: 0/10, Batch: 28/5666, Loss: 3.622520, Grad Norm: 0.326461
-Epoch: 0/10, Batch: 29/5666, Loss: 4.020034, Grad Norm: 0.337380
-Epoch: 0/10, Batch: 30/5666, Loss: 3.928659, Grad Norm: 0.339739
-Epoch: 0/10, Batch: 31/5666, Loss: 4.730234, Grad Norm: 0.311442
-Epoch: 0/10, Batch: 32/5666, Loss: 5.146825, Grad Norm: 0.350415
-Epoch: 0/10, Batch: 33/5666, Loss: 4.992109, Grad Norm: 0.319483
-Audio too short: 13.98s < 30s
-Epoch: 0/10, Batch: 35/5666, Loss: 2.875755, Grad Norm: 0.349772
-Epoch: 0/10, Batch: 36/5666, Loss: 4.200249, Grad Norm: 0.283440
-Epoch: 0/10, Batch: 37/5666, Loss: 3.906825, Grad Norm: 0.333625
-Epoch: 0/10, Batch: 38/5666, Loss: 3.177693, Grad Norm: 0.398812
-Epoch: 0/10, Batch: 39/5666, Loss: 1.348277, Grad Norm: 0.636411
-Epoch: 0/10, Batch: 40/5666, Loss: 3.806020, Grad Norm: 0.345214
-Epoch: 0/10, Batch: 41/5666, Loss: 4.220186, Grad Norm: 0.346473
-Epoch: 0/10, Batch: 42/5666, Loss: 3.335253, Grad Norm: 0.395974
-Epoch: 0/10, Batch: 43/5666, Loss: 4.067463, Grad Norm: 0.282504
-Epoch: 0/10, Batch: 44/5666, Loss: 2.444127, Grad Norm: 0.378221
-Epoch: 0/10, Batch: 45/5666, Loss: 4.044552, Grad Norm: 0.522605
-Epoch: 0/10, Batch: 46/5666, Loss: 2.797176, Grad Norm: 0.299177
-Epoch: 0/10, Batch: 47/5666, Loss: 4.659225, Grad Norm: 0.337380
-Converted mono audio to stereo. New shape: torch.Size([2, 6843664])
-Epoch: 0/10, Batch: 48/5666, Loss: 2.818208, Grad Norm: 0.442313
-Epoch: 0/10, Batch: 49/5666, Loss: 4.481141, Grad Norm: 0.322619
-Epoch: 0/10, Batch: 50/5666, Loss: 4.701951, Grad Norm: 0.359439
-Epoch: 0/10, Batch: 51/5666, Loss: 3.696947, Grad Norm: 0.353146
-Epoch: 0/10, Batch: 52/5666, Loss: 4.696240, Grad Norm: 0.362616
-Epoch: 0/10, Batch: 53/5666, Loss: 4.313525, Grad Norm: 0.307111
-Epoch: 0/10, Batch: 54/5666, Loss: 1.053760, Grad Norm: 1.252062
-Epoch: 0/10, Batch: 55/5666, Loss: 3.256514, Grad Norm: 0.314460
-Epoch: 0/10, Batch: 56/5666, Loss: 2.425181, Grad Norm: 0.371229
-Epoch: 0/10, Batch: 57/5666, Loss: 3.078191, Grad Norm: 0.375803
-Epoch: 0/10, Batch: 58/5666, Loss: 3.272971, Grad Norm: 0.401133
-Epoch: 0/10, Batch: 59/5666, Loss: 4.041219, Grad Norm: 0.325336
-Epoch: 0/10, Batch: 60/5666, Loss: 4.875140, Grad Norm: 0.302719
-Epoch: 0/10, Batch: 61/5666, Loss: 4.715446, Grad Norm: 0.319819
-Epoch: 0/10, Batch: 62/5666, Loss: 4.774663, Grad Norm: 0.298678
-Epoch: 0/10, Batch: 63/5666, Loss: 4.363508, Grad Norm: 0.322528
-Epoch: 0/10, Batch: 64/5666, Loss: 3.667225, Grad Norm: 0.309493
-Epoch: 0/10, Batch: 65/5666, Loss: 4.764791, Grad Norm: 0.324392
-Epoch: 0/10, Batch: 66/5666, Loss: 3.645487, Grad Norm: 0.368622
-Epoch: 0/10, Batch: 67/5666, Loss: 3.425491, Grad Norm: 0.345581
-Epoch: 0/10, Batch: 68/5666, Loss: 4.186661, Grad Norm: 0.450965
-Epoch: 0/10, Batch: 69/5666, Loss: 4.046886, Grad Norm: 0.291666
-Epoch: 0/10, Batch: 70/5666, Loss: 4.340961, Grad Norm: 0.376004
-Epoch: 0/10, Batch: 71/5666, Loss: 4.753670, Grad Norm: 0.398607
-Epoch: 0/10, Batch: 72/5666, Loss: 5.302683, Grad Norm: 0.327310
-Epoch: 0/10, Batch: 73/5666, Loss: 2.420738, Grad Norm: 0.370373
-Epoch: 0/10, Batch: 74/5666, Loss: 4.674152, Grad Norm: 0.403947
-Epoch: 0/10, Batch: 75/5666, Loss: 4.798968, Grad Norm: 0.338216
-Epoch: 0/10, Batch: 76/5666, Loss: 3.196843, Grad Norm: 0.378392
-Epoch: 0/10, Batch: 77/5666, Loss: 5.246288, Grad Norm: 0.368560
-Epoch: 0/10, Batch: 78/5666, Loss: 4.448999, Grad Norm: 0.370150
-Epoch: 0/10, Batch: 79/5666, Loss: 4.599168, Grad Norm: 0.339053
-Epoch: 0/10, Batch: 80/5666, Loss: 5.617479, Grad Norm: 0.303050
-Epoch: 0/10, Batch: 81/5666, Loss: 3.259701, Grad Norm: 0.444628
-Epoch: 0/10, Batch: 82/5666, Loss: 3.800856, Grad Norm: 0.320967
-Epoch: 0/10, Batch: 83/5666, Loss: 3.992066, Grad Norm: 0.420744
-Epoch: 0/10, Batch: 84/5666, Loss: 4.391591, Grad Norm: 0.342012
-Epoch: 0/10, Batch: 85/5666, Loss: 1.855395, Grad Norm: 0.525609
-Epoch: 0/10, Batch: 86/5666, Loss: 1.243234, Grad Norm: 0.260141
-Converted mono audio to stereo. New shape: torch.Size([2, 5014704])
-Epoch: 0/10, Batch: 87/5666, Loss: 3.774738, Grad Norm: 0.470866
-Converted mono audio to stereo. New shape: torch.Size([2, 3363736])
-Epoch: 0/10, Batch: 88/5666, Loss: 4.268665, Grad Norm: 0.327195
-Epoch: 0/10, Batch: 89/5666, Loss: 4.379832, Grad Norm: 0.289430
-Epoch: 0/10, Batch: 90/5666, Loss: 4.715547, Grad Norm: 0.374293
-Epoch: 0/10, Batch: 91/5666, Loss: 4.426944, Grad Norm: 0.350348
-Epoch: 0/10, Batch: 92/5666, Loss: 3.551964, Grad Norm: 0.394119
-Epoch: 0/10, Batch: 93/5666, Loss: 3.857346, Grad Norm: 0.316781
-Epoch: 0/10, Batch: 94/5666, Loss: 3.071598, Grad Norm: 0.395722
-Epoch: 0/10, Batch: 95/5666, Loss: 4.212918, Grad Norm: 0.311564
-Converted mono audio to stereo. New shape: torch.Size([2, 5291364])
-Epoch: 0/10, Batch: 96/5666, Loss: 4.119863, Grad Norm: 0.482546
-Epoch: 0/10, Batch: 97/5666, Loss: 2.873372, Grad Norm: 0.340521
-Epoch: 0/10, Batch: 98/5666, Loss: 3.155391, Grad Norm: 0.339208
-Epoch: 0/10, Batch: 99/5666, Loss: 4.231853, Grad Norm: 0.317027
-Epoch: 0/10, Batch: 100/5666, Loss: 4.778836, Grad Norm: 0.313372
-Epoch: 0/10, Batch: 101/5666, Loss: 4.414974, Grad Norm: 0.359798
-Epoch: 0/10, Batch: 102/5666, Loss: 3.668596, Grad Norm: 0.343213
-Epoch: 0/10, Batch: 103/5666, Loss: 2.656188, Grad Norm: 0.316265
-Epoch: 0/10, Batch: 104/5666, Loss: 2.960743, Grad Norm: 0.259613
-Epoch: 0/10, Batch: 105/5666, Loss: 4.600371, Grad Norm: 0.378422
-Epoch: 0/10, Batch: 106/5666, Loss: 3.718445, Grad Norm: 0.317926
-Epoch: 0/10, Batch: 107/5666, Loss: 4.729743, Grad Norm: 0.291832
-Epoch: 0/10, Batch: 108/5666, Loss: 3.528822, Grad Norm: 0.329598
-Epoch: 0/10, Batch: 109/5666, Loss: 4.098160, Grad Norm: 0.317085
-Epoch: 0/10, Batch: 110/5666, Loss: 3.235110, Grad Norm: 0.396823
-Epoch: 0/10, Batch: 111/5666, Loss: 2.355976, Grad Norm: 0.325943
-Epoch: 0/10, Batch: 112/5666, Loss: 3.728528, Grad Norm: 0.450993
-Epoch: 0/10, Batch: 113/5666, Loss: 4.363687, Grad Norm: 0.331679
-Epoch: 0/10, Batch: 114/5666, Loss: 2.925732, Grad Norm: 0.265317
-Epoch: 0/10, Batch: 115/5666, Loss: 4.177617, Grad Norm: 0.308732
-Audio too short: 1.28s < 30s
-Epoch: 0/10, Batch: 117/5666, Loss: 4.410706, Grad Norm: 0.309687
-Audio too short: 10.89s < 30s
+Epoch: 0/10, Batch: 0/5666, Loss: 9.380543, Grad Norm: 2.593427, LR: 0.000000
+Epoch: 0/10, Batch: 1/5666, Loss: 9.470404, Grad Norm: 2.880956, LR: 0.000000
+Epoch: 0/10, Batch: 2/5666, Loss: 10.004728, Grad Norm: 2.467782, LR: 0.000000
+Epoch: 0/10, Batch: 3/5666, Loss: 9.456326, Grad Norm: 3.129754, LR: 0.000000
+Audio too short: 18.28s < 30s
+Epoch: 0/10, Batch: 5/5666, Loss: 9.679333, Grad Norm: 2.155881, LR: 0.000000
+Epoch: 0/10, Batch: 6/5666, Loss: 10.036487, Grad Norm: 2.811647, LR: 0.000000
+Epoch: 0/10, Batch: 7/5666, Loss: 10.912209, Grad Norm: 2.806173, LR: 0.000000
+Epoch: 0/10, Batch: 8/5666, Loss: 9.215921, Grad Norm: 2.628521, LR: 0.000000
+Epoch: 0/10, Batch: 9/5666, Loss: 9.867625, Grad Norm: 2.511399, LR: 0.000001
+Epoch: 0/10, Batch: 10/5666, Loss: 9.931031, Grad Norm: 3.645802, LR: 0.000001
+Epoch: 0/10, Batch: 11/5666, Loss: 9.844193, Grad Norm: 2.385584, LR: 0.000001
+Epoch: 0/10, Batch: 12/5666, Loss: 9.915849, Grad Norm: 2.673161, LR: 0.000001
+Epoch: 0/10, Batch: 13/5666, Loss: 10.398711, Grad Norm: 2.459841, LR: 0.000001
+Epoch: 0/10, Batch: 14/5666, Loss: 8.956472, Grad Norm: 3.146936, LR: 0.000001
+Epoch: 0/10, Batch: 15/5666, Loss: 9.026124, Grad Norm: 2.581770, LR: 0.000001
+Epoch: 0/10, Batch: 16/5666, Loss: 10.013149, Grad Norm: 2.770690, LR: 0.000001
+Epoch: 0/10, Batch: 17/5666, Loss: 10.948888, Grad Norm: 2.964021, LR: 0.000001
+Epoch: 0/10, Batch: 18/5666, Loss: 10.452107, Grad Norm: 3.742769, LR: 0.000001
+Epoch: 0/10, Batch: 19/5666, Loss: 11.044645, Grad Norm: 2.621096, LR: 0.000001
+Epoch: 0/10, Batch: 20/5666, Loss: 9.865232, Grad Norm: 3.449450, LR: 0.000001
+Epoch: 0/10, Batch: 21/5666, Loss: 9.679011, Grad Norm: 2.542501, LR: 0.000001
+Epoch: 0/10, Batch: 22/5666, Loss: 9.772854, Grad Norm: 2.794647, LR: 0.000001
+Epoch: 0/10, Batch: 23/5666, Loss: 10.127491, Grad Norm: 2.975601, LR: 0.000001
+Converted mono audio to stereo. New shape: torch.Size([2, 11879295])
+Epoch: 0/10, Batch: 24/5666, Loss: 8.646309, Grad Norm: 2.412950, LR: 0.000001
+Epoch: 0/10, Batch: 25/5666, Loss: 11.789833, Grad Norm: 3.259863, LR: 0.000001
+Epoch: 0/10, Batch: 26/5666, Loss: 11.149661, Grad Norm: 3.027453, LR: 0.000001
+Epoch: 0/10, Batch: 27/5666, Loss: 9.877740, Grad Norm: 2.259315, LR: 0.000001
+Epoch: 0/10, Batch: 28/5666, Loss: 9.791773, Grad Norm: 2.604403, LR: 0.000001
+Epoch: 0/10, Batch: 29/5666, Loss: 10.410721, Grad Norm: 2.448973, LR: 0.000001
+Epoch: 0/10, Batch: 30/5666, Loss: 12.725266, Grad Norm: 5.027205, LR: 0.000001
+Epoch: 0/10, Batch: 31/5666, Loss: 10.879553, Grad Norm: 2.756014, LR: 0.000001
+Epoch: 0/10, Batch: 32/5666, Loss: 10.093024, Grad Norm: 2.711596, LR: 0.000001
+Epoch: 0/10, Batch: 33/5666, Loss: 11.740760, Grad Norm: 3.335087, LR: 0.000001
+Epoch: 0/10, Batch: 34/5666, Loss: 13.997166, Grad Norm: 13.158446, LR: 0.000001
+Epoch: 0/10, Batch: 35/5666, Loss: 9.733680, Grad Norm: 2.363276, LR: 0.000001
+Epoch: 0/10, Batch: 36/5666, Loss: 10.916632, Grad Norm: 2.647898, LR: 0.000001
+Epoch: 0/10, Batch: 37/5666, Loss: 9.526019, Grad Norm: 2.679926, LR: 0.000001
+Epoch: 0/10, Batch: 38/5666, Loss: 9.405009, Grad Norm: 2.860371, LR: 0.000001
+Epoch: 0/10, Batch: 39/5666, Loss: 10.927216, Grad Norm: 2.492393, LR: 0.000001
+Epoch: 0/10, Batch: 40/5666, Loss: 9.955498, Grad Norm: 2.213656, LR: 0.000001
+Epoch: 0/10, Batch: 41/5666, Loss: 9.329830, Grad Norm: 2.287059, LR: 0.000001
+Epoch: 0/10, Batch: 42/5666, Loss: 11.229290, Grad Norm: 4.341377, LR: 0.000001
+Epoch: 0/10, Batch: 43/5666, Loss: 8.654216, Grad Norm: 3.653849, LR: 0.000001
+Epoch: 0/10, Batch: 44/5666, Loss: 10.097575, Grad Norm: 2.697487, LR: 0.000001
+Epoch: 0/10, Batch: 45/5666, Loss: 9.482221, Grad Norm: 2.693107, LR: 0.000001
+Epoch: 0/10, Batch: 46/5666, Loss: 12.161860, Grad Norm: 3.275029, LR: 0.000001
+Epoch: 0/10, Batch: 47/5666, Loss: 11.120285, Grad Norm: 4.062958, LR: 0.000001
+Epoch: 0/10, Batch: 48/5666, Loss: 9.980017, Grad Norm: 2.703740, LR: 0.000001
+Epoch: 0/10, Batch: 49/5666, Loss: 9.838644, Grad Norm: 3.056959, LR: 0.000001
+Epoch: 0/10, Batch: 50/5666, Loss: 9.787543, Grad Norm: 3.006847, LR: 0.000001
+Epoch: 0/10, Batch: 51/5666, Loss: 9.247352, Grad Norm: 2.081483, LR: 0.000001
+Converted mono audio to stereo. New shape: torch.Size([2, 3440640])
+Epoch: 0/10, Batch: 52/5666, Loss: 11.995970, Grad Norm: 3.298068, LR: 0.000001
+Epoch: 0/10, Batch: 53/5666, Loss: 9.150519, Grad Norm: 2.168291, LR: 0.000001
+Epoch: 0/10, Batch: 54/5666, Loss: 11.108770, Grad Norm: 3.425226, LR: 0.000001
+Epoch: 0/10, Batch: 55/5666, Loss: 9.070645, Grad Norm: 2.580854, LR: 0.000001
+Epoch: 0/10, Batch: 56/5666, Loss: 11.337634, Grad Norm: 5.824495, LR: 0.000001
+Epoch: 0/10, Batch: 57/5666, Loss: 11.996575, Grad Norm: 4.569653, LR: 0.000001
+Epoch: 0/10, Batch: 58/5666, Loss: 9.915376, Grad Norm: 2.357975, LR: 0.000001
+Epoch: 0/10, Batch: 59/5666, Loss: 10.199860, Grad Norm: 2.768355, LR: 0.000001
+Epoch: 0/10, Batch: 60/5666, Loss: 10.248775, Grad Norm: 2.767861, LR: 0.000001
+Epoch: 0/10, Batch: 61/5666, Loss: 10.740139, Grad Norm: 3.046349, LR: 0.000001
+Epoch: 0/10, Batch: 62/5666, Loss: 10.455063, Grad Norm: 3.649673, LR: 0.000001
+Epoch: 0/10, Batch: 63/5666, Loss: 10.186927, Grad Norm: 2.335995, LR: 0.000001
+Epoch: 0/10, Batch: 64/5666, Loss: 10.469206, Grad Norm: 2.524576, LR: 0.000001
+Epoch: 0/10, Batch: 65/5666, Loss: 10.897931, Grad Norm: 3.340415, LR: 0.000001
+Converted mono audio to stereo. New shape: torch.Size([2, 7748619])
+Epoch: 0/10, Batch: 66/5666, Loss: 11.090846, Grad Norm: 2.546843, LR: 0.000001
+Epoch: 0/10, Batch: 67/5666, Loss: 10.193687, Grad Norm: 3.112506, LR: 0.000001
+Epoch: 0/10, Batch: 68/5666, Loss: 9.791798, Grad Norm: 2.950838, LR: 0.000001
+Epoch: 0/10, Batch: 69/5666, Loss: 10.170832, Grad Norm: 2.813452, LR: 0.000001
+Epoch: 0/10, Batch: 70/5666, Loss: 9.403555, Grad Norm: 2.207979, LR: 0.000001
+Epoch: 0/10, Batch: 71/5666, Loss: 10.505515, Grad Norm: 2.823381, LR: 0.000001
+Epoch: 0/10, Batch: 72/5666, Loss: 9.857183, Grad Norm: 2.159679, LR: 0.000001
+Converted mono audio to stereo. New shape: torch.Size([2, 1457842])
+Epoch: 0/10, Batch: 73/5666, Loss: 9.733919, Grad Norm: 2.571745, LR: 0.000001
+Epoch: 0/10, Batch: 74/5666, Loss: 11.108079, Grad Norm: 3.360879, LR: 0.000001
+Epoch: 0/10, Batch: 75/5666, Loss: 8.504274, Grad Norm: 2.705440, LR: 0.000001
+Epoch: 0/10, Batch: 76/5666, Loss: 9.975979, Grad Norm: 2.378265, LR: 0.000001
+Epoch: 0/10, Batch: 77/5666, Loss: 11.217133, Grad Norm: 3.452439, LR: 0.000001
+Converted mono audio to stereo. New shape: torch.Size([2, 5663347])
+Epoch: 0/10, Batch: 78/5666, Loss: 9.830994, Grad Norm: 2.415280, LR: 0.000001
+Epoch: 0/10, Batch: 79/5666, Loss: 10.706058, Grad Norm: 2.218896, LR: 0.000001
+Epoch: 0/10, Batch: 80/5666, Loss: 9.324283, Grad Norm: 2.279018, LR: 0.000001
+Epoch: 0/10, Batch: 81/5666, Loss: 9.173371, Grad Norm: 2.485725, LR: 0.000001
+Epoch: 0/10, Batch: 82/5666, Loss: 12.847607, Grad Norm: 4.438336, LR: 0.000001
+Epoch: 0/10, Batch: 83/5666, Loss: 8.795321, Grad Norm: 2.770368, LR: 0.000001
+Epoch: 0/10, Batch: 84/5666, Loss: 9.048322, Grad Norm: 3.114607, LR: 0.000001
+Epoch: 0/10, Batch: 85/5666, Loss: 9.772478, Grad Norm: 2.499051, LR: 0.000001
+Epoch: 0/10, Batch: 86/5666, Loss: 9.408831, Grad Norm: 2.939984, LR: 0.000001
+Epoch: 0/10, Batch: 87/5666, Loss: 8.834810, Grad Norm: 2.384722, LR: 0.000001
+Epoch: 0/10, Batch: 88/5666, Loss: 10.417873, Grad Norm: 2.633074, LR: 0.000001
+Epoch: 0/10, Batch: 89/5666, Loss: 10.949633, Grad Norm: 3.176531, LR: 0.000001
+Epoch: 0/10, Batch: 90/5666, Loss: 9.384403, Grad Norm: 2.057255, LR: 0.000001
+Epoch: 0/10, Batch: 91/5666, Loss: 11.049641, Grad Norm: 3.991757, LR: 0.000001
+Audio too short: 23.96s < 30s
+Epoch: 0/10, Batch: 93/5666, Loss: 9.562031, Grad Norm: 2.863554, LR: 0.000001
+Epoch: 0/10, Batch: 94/5666, Loss: 10.405821, Grad Norm: 2.156222, LR: 0.000001
+Epoch: 0/10, Batch: 95/5666, Loss: 9.690410, Grad Norm: 1.993301, LR: 0.000001
+Epoch: 0/10, Batch: 96/5666, Loss: 11.485806, Grad Norm: 3.841164, LR: 0.000001
+Epoch: 0/10, Batch: 97/5666, Loss: 9.664062, Grad Norm: 2.175586, LR: 0.000001
+Epoch: 0/10, Batch: 98/5666, Loss: 9.013483, Grad Norm: 2.782358, LR: 0.000001
+Epoch: 0/10, Batch: 99/5666, Loss: 9.302527, Grad Norm: 2.220898, LR: 0.000001
+Epoch: 0/10, Batch: 100/5666, Loss: 10.473409, Grad Norm: 2.828068, LR: 0.000001
+Epoch: 0/10, Batch: 101/5666, Loss: 10.891617, Grad Norm: 3.114436, LR: 0.000001
+Epoch: 0/10, Batch: 102/5666, Loss: 9.970019, Grad Norm: 2.113396, LR: 0.000001
+Epoch: 0/10, Batch: 103/5666, Loss: 11.116246, Grad Norm: 3.173411, LR: 0.000001
+Epoch: 0/10, Batch: 104/5666, Loss: 10.879923, Grad Norm: 2.753366, LR: 0.000001
+Epoch: 0/10, Batch: 105/5666, Loss: 8.728278, Grad Norm: 2.562871, LR: 0.000001
+Epoch: 0/10, Batch: 106/5666, Loss: 10.134690, Grad Norm: 2.482246, LR: 0.000001
+Epoch: 0/10, Batch: 107/5666, Loss: 10.480867, Grad Norm: 2.724501, LR: 0.000001
+Epoch: 0/10, Batch: 108/5666, Loss: 11.975479, Grad Norm: 4.198705, LR: 0.000001
+Epoch: 0/10, Batch: 109/5666, Loss: 9.753916, Grad Norm: 2.819911, LR: 0.000001
+Epoch: 0/10, Batch: 110/5666, Loss: 8.850807, Grad Norm: 2.575879, LR: 0.000001
+Epoch: 0/10, Batch: 111/5666, Loss: 12.257229, Grad Norm: 7.009834, LR: 0.000001
+Epoch: 0/10, Batch: 112/5666, Loss: 11.396495, Grad Norm: 3.111287, LR: 0.000001
+Epoch: 0/10, Batch: 113/5666, Loss: 9.958428, Grad Norm: 2.703043, LR: 0.000001
+Epoch: 0/10, Batch: 114/5666, Loss: 11.126152, Grad Norm: 3.757897, LR: 0.000001
+Epoch: 0/10, Batch: 115/5666, Loss: 9.397000, Grad Norm: 1.790023, LR: 0.000001
+Epoch: 0/10, Batch: 116/5666, Loss: 9.216789, Grad Norm: 2.683156, LR: 0.000001
+Epoch: 0/10, Batch: 117/5666, Loss: 10.563363, Grad Norm: 2.866355, LR: 0.000001
+Epoch: 0/10, Batch: 118/5666, Loss: 10.353413, Grad Norm: 2.765741, LR: 0.000001
+Epoch: 0/10, Batch: 119/5666, Loss: 8.736853, Grad Norm: 2.463826, LR: 0.000001
+Epoch: 0/10, Batch: 120/5666, Loss: 9.990645, Grad Norm: 2.188805, LR: 0.000001
+Epoch: 0/10, Batch: 121/5666, Loss: 9.581099, Grad Norm: 2.275751, LR: 0.000001
+Epoch: 0/10, Batch: 122/5666, Loss: 10.079755, Grad Norm: 3.055522, LR: 0.000001
+Epoch: 0/10, Batch: 123/5666, Loss: 11.263508, Grad Norm: 3.523439, LR: 0.000001
+Epoch: 0/10, Batch: 124/5666, Loss: 10.415926, Grad Norm: 2.890963, LR: 0.000001
+Epoch: 0/10, Batch: 125/5666, Loss: 11.304296, Grad Norm: 2.694247, LR: 0.000001
+Epoch: 0/10, Batch: 126/5666, Loss: 11.164907, Grad Norm: 2.868341, LR: 0.000001
+Epoch: 0/10, Batch: 127/5666, Loss: 14.803810, Grad Norm: 10.202967, LR: 0.000001
+Epoch: 0/10, Batch: 128/5666, Loss: 9.401100, Grad Norm: 2.206817, LR: 0.000001
+Epoch: 0/10, Batch: 129/5666, Loss: 9.920218, Grad Norm: 2.581044, LR: 0.000001
+Epoch: 0/10, Batch: 130/5666, Loss: 11.202680, Grad Norm: 2.611343, LR: 0.000001
+Epoch: 0/10, Batch: 131/5666, Loss: 10.629426, Grad Norm: 2.425620, LR: 0.000001
+Epoch: 0/10, Batch: 132/5666, Loss: 9.460855, Grad Norm: 3.084140, LR: 0.000001
+Epoch: 0/10, Batch: 133/5666, Loss: 9.641842, Grad Norm: 2.451129, LR: 0.000001
+Epoch: 0/10, Batch: 134/5666, Loss: 9.583798, Grad Norm: 2.121467, LR: 0.000001
+Audio too short: 17.11s < 30s
+Epoch: 0/10, Batch: 136/5666, Loss: 11.463223, Grad Norm: 2.935619, LR: 0.000001
+Epoch: 0/10, Batch: 137/5666, Loss: 10.453176, Grad Norm: 3.023989, LR: 0.000001
+Epoch: 0/10, Batch: 138/5666, Loss: 11.201074, Grad Norm: 3.220961, LR: 0.000001
+Epoch: 0/10, Batch: 139/5666, Loss: 13.419467, Grad Norm: 12.632872, LR: 0.000001
+Epoch: 0/10, Batch: 140/5666, Loss: 9.462239, Grad Norm: 2.536102, LR: 0.000001
+Epoch: 0/10, Batch: 141/5666, Loss: 11.359989, Grad Norm: 2.689989, LR: 0.000001
+Epoch: 0/10, Batch: 142/5666, Loss: 9.764485, Grad Norm: 3.557911, LR: 0.000001
+Epoch: 0/10, Batch: 143/5666, Loss: 9.626939, Grad Norm: 1.959480, LR: 0.000001
+Epoch: 0/10, Batch: 144/5666, Loss: 11.075260, Grad Norm: 4.426097, LR: 0.000001
+Epoch: 0/10, Batch: 145/5666, Loss: 9.239052, Grad Norm: 2.722998, LR: 0.000001
+Epoch: 0/10, Batch: 146/5666, Loss: 9.357660, Grad Norm: 2.956609, LR: 0.000001
+Epoch: 0/10, Batch: 147/5666, Loss: 7.904609, Grad Norm: 2.435737, LR: 0.000001
+Epoch: 0/10, Batch: 148/5666, Loss: 10.000602, Grad Norm: 2.544866, LR: 0.000001
+Converted mono audio to stereo. New shape: torch.Size([2, 5603161])
+Epoch: 0/10, Batch: 149/5666, Loss: 10.303486, Grad Norm: 3.429690, LR: 0.000001
+Epoch: 0/10, Batch: 150/5666, Loss: 11.310272, Grad Norm: 3.738931, LR: 0.000001
+Epoch: 0/10, Batch: 151/5666, Loss: 11.766672, Grad Norm: 3.817441, LR: 0.000001
+Epoch: 0/10, Batch: 152/5666, Loss: 10.405473, Grad Norm: 2.459616, LR: 0.000001
 Converted mono audio to stereo. New shape: torch.Size([2, 8142681])
-Epoch: 0/10, Batch: 119/5666, Loss: 3.540659, Grad Norm: 0.255051
+Epoch: 0/10, Batch: 153/5666, Loss: 9.942860, Grad Norm: 2.695373, LR: 0.000001
+Epoch: 0/10, Batch: 154/5666, Loss: 11.137315, Grad Norm: 3.617979, LR: 0.000001
+Converted mono audio to stereo. New shape: torch.Size([2, 5291364])
+Epoch: 0/10, Batch: 155/5666, Loss: 8.945450, Grad Norm: 1.896369, LR: 0.000001
+Epoch: 0/10, Batch: 156/5666, Loss: 9.508012, Grad Norm: 2.390449, LR: 0.000001
+Epoch: 0/10, Batch: 157/5666, Loss: 9.730555, Grad Norm: 2.070947, LR: 0.000001
+Epoch: 0/10, Batch: 158/5666, Loss: 9.507450, Grad Norm: 1.872950, LR: 0.000001
+Epoch: 0/10, Batch: 159/5666, Loss: 11.106409, Grad Norm: 4.798171, LR: 0.000001
+Epoch: 0/10, Batch: 160/5666, Loss: 10.515408, Grad Norm: 3.586004, LR: 0.000001
+Epoch: 0/10, Batch: 161/5666, Loss: 9.240440, Grad Norm: 2.403667, LR: 0.000001
+Epoch: 0/10, Batch: 162/5666, Loss: 11.610117, Grad Norm: 3.859242, LR: 0.000001
+Epoch: 0/10, Batch: 163/5666, Loss: 10.869660, Grad Norm: 2.241619, LR: 0.000001
+Audio too short: 28.89s < 30s
+Epoch: 0/10, Batch: 165/5666, Loss: 10.787869, Grad Norm: 3.162676, LR: 0.000001
+Epoch: 0/10, Batch: 166/5666, Loss: 10.211457, Grad Norm: 3.238320, LR: 0.000001
+Epoch: 0/10, Batch: 167/5666, Loss: 9.610169, Grad Norm: 5.867789, LR: 0.000001
+Epoch: 0/10, Batch: 168/5666, Loss: 10.361103, Grad Norm: 8.468768, LR: 0.000001
+Epoch: 0/10, Batch: 169/5666, Loss: 10.443672, Grad Norm: 2.198322, LR: 0.000001
+Epoch: 0/10, Batch: 170/5666, Loss: 10.220870, Grad Norm: 3.287693, LR: 0.000001
+Epoch: 0/10, Batch: 171/5666, Loss: 8.380339, Grad Norm: 2.548958, LR: 0.000001
+Epoch: 0/10, Batch: 172/5666, Loss: 9.917977, Grad Norm: 9.718883, LR: 0.000001
+Epoch: 0/10, Batch: 173/5666, Loss: 9.521478, Grad Norm: 2.357594, LR: 0.000001
+Epoch: 0/10, Batch: 174/5666, Loss: 9.449883, Grad Norm: 2.235920, LR: 0.000001
+Converted mono audio to stereo. New shape: torch.Size([2, 56945268])
+Epoch: 0/10, Batch: 175/5666, Loss: 10.385156, Grad Norm: 4.300038, LR: 0.000001
+Epoch: 0/10, Batch: 176/5666, Loss: 11.584836, Grad Norm: 3.500925, LR: 0.000001
+Epoch: 0/10, Batch: 177/5666, Loss: 10.535358, Grad Norm: 2.625152, LR: 0.000001
+Epoch: 0/10, Batch: 178/5666, Loss: 9.626422, Grad Norm: 2.478222, LR: 0.000001
+Epoch: 0/10, Batch: 179/5666, Loss: 9.522604, Grad Norm: 4.778772, LR: 0.000001
+Epoch: 0/10, Batch: 180/5666, Loss: 10.807982, Grad Norm: 22.943684, LR: 0.000001
+Epoch: 0/10, Batch: 181/5666, Loss: 9.322422, Grad Norm: 3.225587, LR: 0.000001
+Epoch: 0/10, Batch: 182/5666, Loss: 10.443395, Grad Norm: 3.039862, LR: 0.000001
+Epoch: 0/10, Batch: 183/5666, Loss: 10.993540, Grad Norm: 2.901712, LR: 0.000001
+Epoch: 0/10, Batch: 184/5666, Loss: 10.625195, Grad Norm: 2.576795, LR: 0.000001
