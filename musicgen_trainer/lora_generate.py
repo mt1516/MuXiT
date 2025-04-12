@@ -1,5 +1,6 @@
 import argparse
 import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "7"  # Set the GPU device to use
 import torch
 import torchaudio
 from audiocraft.models import MusicGen

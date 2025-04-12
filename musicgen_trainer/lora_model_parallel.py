@@ -8,6 +8,8 @@ from audiocraft.modules.transformer import StreamingTransformer  # Changed from 
 from collections import deque
 import threading
 import queue
+import gc
+import weakref
 
 class ModelParallelTransformer(nn.Module):
     """Model parallel version of the transformer encoder from MusicGen.
@@ -97,7 +99,7 @@ class ModelParallelTransformer(nn.Module):
         orig_dtype = x.dtype
         
         # Start on the first device
-        x = x.to(self.devices[0])
+        x = x.to(self.devices[0], non_blocking=True)
         
         # Handle positional embeddings (similar to StreamingTransformer)
         if hasattr(self, 'positional_embedding') and hasattr(self, 'positional_scale'):
@@ -110,6 +112,9 @@ class ModelParallelTransformer(nn.Module):
             
             # Add to input with appropriate scaling
             x = x + self.positional_scale * pos_emb
+            # Free positions tensor explicitly
+            del positions
+            
         # Apply embedding if available (though unlikely in MusicGen)
         elif hasattr(self, 'emb') and self.emb is not None:
             x = self.emb(x)
@@ -118,110 +123,22 @@ class ModelParallelTransformer(nn.Module):
             if hasattr(self, 'pos_emb') and self.pos_emb is not None:
                 pos_emb = self.pos_emb(x)
                 x = x + pos_emb
+                del pos_emb  # Explicitly free
         
         # If cross_attention present in kwargs, move it to each device as needed
         cross_attention_src = kwargs.get('cross_attention_src', None)
         
-        # Pipeline parallelism with chunking
-        # Break the batch into micro-batches to keep multiple GPUs busy
-        num_chunks = min(B, max(2, self.num_devices * 2))  # At least 2 chunks, ideally more than devices
-        chunk_size = B // num_chunks
-        remainder = B % num_chunks
-        
-        # Prepare chunks with proper sizes
-        chunk_sizes = [chunk_size + 1 if i < remainder else chunk_size for i in range(num_chunks)]
-        chunks = []
-        
-        start_idx = 0
-        for size in chunk_sizes:
-            if size > 0:
-                end_idx = start_idx + size
-                chunks.append(x[start_idx:end_idx])
-                start_idx = end_idx
-                
-        # Process chunks in a pipelined fashion
-        outputs = []
-        
-        # Queues for inter-device communication
-        device_queues = [queue.Queue() for _ in range(self.num_devices)]
-        
-        # Process function for each device
-        def process_device(device_idx, input_queue, output_queue=None):
-            device = self.devices[device_idx]
-            is_last_device = device_idx == self.num_devices - 1
-            
-            while not input_queue.empty():
-                try:
-                    chunk_data = input_queue.get(block=False)
-                    chunk_idx, chunk_tensor = chunk_data
-                    
-                    # Move chunk to current device
-                    chunk_tensor = chunk_tensor.to(device, dtype=orig_dtype)
-                    
-                    # Handle cross attention if needed
-                    device_kwargs = kwargs.copy()
-                    if cross_attention_src is not None:
-                        device_kwargs['cross_attention_src'] = cross_attention_src.to(device)
-                    
-                    # Process all layers on this device
-                    for layer in self.device_layers[device_idx]:
-                        chunk_tensor = self._apply_layer(layer, chunk_tensor, **device_kwargs)
-                    
-                    # If last device, apply normalization if available
-                    if is_last_device and hasattr(self, 'norm') and self.norm is not None:
-                        chunk_tensor = self.norm(chunk_tensor)
-                    
-                    # Pass to next device or add to outputs
-                    if output_queue is not None:
-                        output_queue.put((chunk_idx, chunk_tensor))
-                    else:
-                        # For the last device, store output
-                        with torch.no_grad():  # Avoid creating computational graph across devices
-                            outputs.append((chunk_idx, chunk_tensor.cpu()))
-                    
-                except queue.Empty:
-                    break
-        
-        # Initial chunks go to first device
-        for i, chunk in enumerate(chunks):
-            device_queues[0].put((i, chunk))
-        
-        # Process devices in order (we still need sequential processing through the pipeline)
-        # But each device can process multiple chunks
-        for device_idx in range(self.num_devices):
-            input_queue = device_queues[device_idx]
-            output_queue = device_queues[device_idx + 1] if device_idx < self.num_devices - 1 else None
-            process_device(device_idx, input_queue, output_queue)
-        
-        # Collect all outputs
-        collected_outputs = []
-        for chunk_idx, tensor in outputs:
-            collected_outputs.append((chunk_idx, tensor))
-        
-        # Sort by original chunk index and concatenate
-        collected_outputs.sort(key=lambda x: x[0])
-        result_tensors = [tensor for _, tensor in collected_outputs]
-        
-        # Move back to last device and concatenate
-        if result_tensors:
-            result = torch.cat(result_tensors, dim=0).to(self.devices[-1])
-            return result
-        else:
-            # Fallback to sequential processing if pipelining failed
-            return self._sequential_forward(x, **kwargs)
-    
-    def _sequential_forward(self, x, **kwargs):
-        """Legacy sequential forward pass as fallback."""
-        # Process through each device's layers sequentially
+        # Instead of pipeline parallelism, use simple sequential processing
+        # that preserves the computation graph for gradient flow
         for device_idx, device in enumerate(self.devices):
             # Move input to current device if needed
             if x.device != device:
-                x = x.to(device)
+                # IMPORTANT: Do not detach when moving between devices
+                # to preserve the computational graph for backward pass
+                x = x.to(device, non_blocking=True)
             
-            # Apply all layers on this device
+            # Process through all layers on this device, maintaining gradients
             for layer in self.device_layers[device_idx]:
-                # Ensure consistent dtype through all layers
-                x = x.to(layer.weight.dtype if hasattr(layer, 'weight') else x.dtype)
                 x = self._apply_layer(layer, x, **kwargs)
         
         # Apply final normalization on the last device if available
@@ -229,6 +146,31 @@ class ModelParallelTransformer(nn.Module):
             x = self.norm(x)
         
         return x
+    
+    def _sequential_forward(self, x, **kwargs):
+        """Legacy sequential forward pass as fallback."""
+        # Process through each device's layers sequentially
+        try:
+            for device_idx, device in enumerate(self.devices):
+                # Move input to current device if needed
+                if x.device != device:
+                    x = x.to(device, non_blocking=True)
+                
+                # Apply all layers on this device
+                for layer in self.device_layers[device_idx]:
+                    # Ensure consistent dtype through all layers
+                    x = x.to(layer.weight.dtype if hasattr(layer, 'weight') else x.dtype)
+                    x = self._apply_layer(layer, x, **kwargs)
+            
+            # Apply final normalization on the last device if available
+            if hasattr(self, 'norm') and self.norm is not None:
+                x = self.norm(x)
+            
+            return x
+        finally:
+            # Clean up cross attention tensors if they exist
+            if 'cross_attention_src' in kwargs:
+                del kwargs['cross_attention_src']
     
     def _apply_layer(self, layer, x, **kwargs):
         """Apply a single transformer layer."""
@@ -247,6 +189,11 @@ class ModelParallelTransformer(nn.Module):
                 return result.to(orig_dtype)
             else:
                 raise e
+
+    def __del__(self):
+        """Destructor to ensure proper cleanup."""
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
 
 class ModelParallelLM(nn.Module):
@@ -306,72 +253,101 @@ class ModelParallelLM(nn.Module):
 
     def compute_predictions(self, codes, conditions=None, condition_tensors=None, stage=-1):
         """Compute next-token predictions using the model-parallel transformer."""
-        # Prepare inputs on the first device
-        device = self.devices[0]
+        try:
+            # Prepare inputs on the first device
+            device = self.devices[0]
+            
+            b, k, t = codes.shape
+            codes = codes.to(device, non_blocking=True)
+            
+            # Handle condition tensors
+            if condition_tensors is None and conditions is not None:
+                assert self.condition_provider is not None
+                conditions = self.cfg_dropout(conditions) if hasattr(self, 'cfg_dropout') else conditions
+                conditions = self.att_dropout(conditions) if hasattr(self, 'att_dropout') else conditions
+                tokenized = self.condition_provider.tokenize(conditions)
+                condition_tensors = self.condition_provider(tokenized)
+            
+            # Apply fuser if available
+            input_ = None
+            cross_attention_input = condition_tensors
+            
+            if hasattr(self, 'emb') and hasattr(self, 'fuser'):
+                # Build input from embeddings (like in the original LMModel)
+                input_ = sum([self.emb[k](codes[:, k]) for k in range(k)])
+                input_, cross_attention_input = self.fuser(input_, condition_tensors)
+            else:
+                # Fallback: just use the codes as input
+                input_ = codes
+            
+            # Process through the model-parallel transformer
+            out = self.transformer(input_, cross_attention_src=cross_attention_input)
+            
+            # Apply out_norm if available (before projection)
+            if self.out_norm is not None:
+                out = self.out_norm(out)
+            
+            # Apply separate linear projections for each codebook
+            # and stack the results [B, K, S, card]
+            out = out.to(self.devices[-1], non_blocking=True)  # Move to last device for final projections
+            logits = torch.stack([self.linears[i](out) for i in range(len(self.linears))], dim=1)
+            
+            # Create mask for valid positions - more memory efficient by using device reuse
+            mask = torch.ones_like(codes, dtype=torch.bool, device=self.devices[-1])
+            
+            # Break computational history to prevent memory leaks
+            out = out.detach()
+            
+            # Use namedtuple-style object with weak references to help garbage collection
+            class ModelOutput:
+                def __init__(self, logits, mask):
+                    self.logits = logits
+                    self.mask = mask
+                    
+            return ModelOutput(logits=logits, mask=mask)
         
-        b, k, t = codes.shape
-        codes = codes.to(device)
-        
-        # Handle condition tensors
-        if condition_tensors is None and conditions is not None:
-            assert self.condition_provider is not None
-            conditions = self.cfg_dropout(conditions) if hasattr(self, 'cfg_dropout') else conditions
-            conditions = self.att_dropout(conditions) if hasattr(self, 'att_dropout') else conditions
-            tokenized = self.condition_provider.tokenize(conditions)
-            condition_tensors = self.condition_provider(tokenized)
-        
-        # Apply fuser if available
-        input_ = None
-        cross_attention_input = condition_tensors
-        
-        if hasattr(self, 'emb') and hasattr(self, 'fuser'):
-            # Build input from embeddings (like in the original LMModel)
-            input_ = sum([self.emb[k](codes[:, k]) for k in range(k)])
-            input_, cross_attention_input = self.fuser(input_, condition_tensors)
-        else:
-            # Fallback: just use the codes as input
-            input_ = codes
-        
-        # Process through the model-parallel transformer
-        out = self.transformer(input_, cross_attention_src=cross_attention_input)
-        
-        # Apply out_norm if available (before projection)
-        if self.out_norm is not None:
-            out = self.out_norm(out)
-        
-        # Apply separate linear projections for each codebook
-        # and stack the results [B, K, S, card]
-        out = out.to(self.devices[-1])  # Move to last device for final projections
-        logits = torch.stack([self.linears[i](out) for i in range(len(self.linears))], dim=1)
-        
-        # Create mask for valid positions
-        mask = torch.ones_like(codes, dtype=torch.bool, device=self.devices[-1])
-        
-        return type('ModelOutput', (), {'logits': logits, 'mask': mask})
+        finally:
+            # Help garbage collection
+            if condition_tensors is not None:
+                del condition_tensors
+            if cross_attention_input is not None and cross_attention_input is not condition_tensors:
+                del cross_attention_input
+            # Trigger garbage collection
+            gc.collect()
 
     def forward(self, sequence_codes, conditions=None, condition_tensors=None, stage='decoder'):
         """Forward pass for the model-parallel LM."""
-        device = self.devices[0]
-        if condition_tensors is None and conditions is not None:
-            tokenized = self.condition_provider.tokenize(conditions)
-            condition_tensors = self.condition_provider(tokenized)
+        try:
+            device = self.devices[0]
+            if condition_tensors is None and conditions is not None:
+                tokenized = self.condition_provider.tokenize(conditions)
+                condition_tensors = self.condition_provider(tokenized)
+                
+            # Move inputs to the first device
+            sequence_codes = sequence_codes.to(device, non_blocking=True)
+            if condition_tensors is not None:
+                condition_tensors = condition_tensors.to(device, non_blocking=True)
+                
+            # Process through transformer (will automatically handle device transitions)
+            out = self.transformer(sequence_codes, cross_attention_src=condition_tensors)
             
-        # Move inputs to the first device
-        sequence_codes = sequence_codes.to(device)
-        if condition_tensors is not None:
-            condition_tensors = condition_tensors.to(device)
+            # Final layer processes on last device
+            out = self.linears[-1](out.to(self.devices[-1], non_blocking=True))
             
-        # Process through transformer (will automatically handle device transitions)
-        out = self.transformer(sequence_codes, cross_attention_src=condition_tensors)
-        
-        # Final layer processes on last device
-        out = self.linears[-1](out.to(self.devices[-1]))
-        
-        # Apply out_norm if available
-        if self.out_norm is not None:
-            out = self.out_norm(out)
-        
-        return out
+            # Apply out_norm if available
+            if self.out_norm is not None:
+                out = self.out_norm(out)
+            
+            return out
+        finally:
+            # Clean up to avoid memory leaks
+            if condition_tensors is not None:
+                del condition_tensors
+
+    def __del__(self):
+        """Destructor to ensure proper cleanup."""
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
 
 def create_model_parallel_lm(original_lm, gpu_ids=[5, 7]):

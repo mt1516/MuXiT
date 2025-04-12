@@ -1,5 +1,5 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "5,7"  # Can be changed for multi-GPU setups
+os.environ["CUDA_VISIBLE_DEVICES"] = "7"
 
 from lora_train import train
 
