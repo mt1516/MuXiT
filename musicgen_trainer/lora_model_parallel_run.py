@@ -1,6 +1,6 @@
 import os
 # Explicitly set only GPUs 5 and 7 to be visible to PyTorch
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6,7"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1,2,3,4,5,6,7"
 import sys
 import torch
 import argparse
@@ -14,7 +14,9 @@ import wandb
 import random
 import torchaudio
 import math
+import time
 from torch.nn.parallel import DistributedDataParallel as DDP
+import gc
 
 def preprocess_audio(audio_path, model, duration: int = 30):
     """Load and preprocess audio."""
@@ -92,7 +94,9 @@ def train_model_parallel(
     gpu_ids: list = [0, 1],  # Changed to local device IDs (0,1 when using CUDA_VISIBLE_DEVICES)
     cpu_offload: bool = False,
     target_modules: str = "all",
-    fp16: bool = False  # Set to True if you want to use half precision
+    fp16: bool = False,  # Set to True if you want to use half precision
+    memory_cleanup_freq: int = 8,  # Clean memory every N batches
+    debug_grads: bool = True,  # Debug gradient flow
 ):
     """Train using model parallelism with LoRA."""
     
@@ -102,6 +106,7 @@ def train_model_parallel(
     
     # When using CUDA_VISIBLE_DEVICES, the visible GPUs are mapped to indices starting from 0
     # So even though we're targeting GPUs 5 and 7, inside PyTorch they become 0 and 1
+    num_gpus = torch.cuda.device_count()
     local_gpu_ids = list(range(len(gpu_ids)))
     print(f"Using logical GPU indices: {local_gpu_ids}")
     
@@ -152,6 +157,9 @@ def train_model_parallel(
     trainable_params_count = 0
     total_params_count = 0
     
+    # Track all LoRA modules for gradient debugging
+    all_lora_modules = []
+    
     if isinstance(target_modules, str):
         from lora_train import get_lora_target_modules
         target_modules = get_lora_target_modules(model.lm, target_modules)
@@ -190,6 +198,9 @@ def train_model_parallel(
                     module.lora_dropout = lora_dropout_layer
                     module.scaling = lora_alpha / lora_r
                     
+                    # Track modules for gradient debugging
+                    all_lora_modules.append((f"device_{device_idx}.{name}", module))
+                    
                     # Save original forward
                     module.original_forward = module.forward
                     
@@ -198,9 +209,18 @@ def train_model_parallel(
                         original_forward = module.original_forward
                         
                         def lora_forward(x):
+                            # Original module output (frozen weights)
                             result = original_forward(x)
-                            # Ensure we're on the correct device
+                            
+                            # LoRA path - ensuring gradient flow
                             lora_output = module.lora_B(module.lora_A(module.lora_dropout(x))) * module.scaling
+                            
+                            # Debug gradient flow during training (can be removed in production)
+                            if module.training and torch.is_grad_enabled():
+                                # Mark this tensor explicitly for gradient tracking
+                                lora_output.requires_grad_(True)
+                            
+                            # Combine outputs
                             return result + lora_output
                         
                         return lora_forward
@@ -209,13 +229,13 @@ def train_model_parallel(
                     module.forward = make_lora_forward(module)
                     
                     # Make LoRA params trainable only
+                    for param in module.parameters():
+                        param.requires_grad = False
+                    
                     for param in module.lora_A.parameters():
                         param.requires_grad = True
                     for param in module.lora_B.parameters():
                         param.requires_grad = True
-                    module.weight.requires_grad = False
-                    if module.bias is not None:
-                        module.bias.requires_grad = False
     
     # Check linears (output projections) which are on the last device
     if hasattr(model.lm, 'linears'):
@@ -251,6 +271,9 @@ def train_model_parallel(
                             module.lora_dropout = lora_dropout_layer
                             module.scaling = lora_alpha / lora_r
                             
+                            # Track modules for gradient debugging
+                            all_lora_modules.append((f"linear_{i}", module))
+                            
                             # Save original forward
                             module.original_forward = module.forward
                             
@@ -258,15 +281,30 @@ def train_model_parallel(
                             module.forward = make_lora_forward(module)
                             
                             # Make LoRA params trainable only
+                            for param in module.parameters():
+                                param.requires_grad = False
+                                
                             for param in module.lora_A.parameters():
                                 param.requires_grad = True
                             for param in module.lora_B.parameters():
                                 param.requires_grad = True
-                            module.weight.requires_grad = False
-                            if module.bias is not None:
-                                module.bias.requires_grad = False
     
     print(f"Added LoRA modules! Trainable params: {trainable_params_count:,} ({100 * trainable_params_count / total_params_count:.6f}% of total {total_params_count:,})")
+    
+    # Debug: Verify parameters have requires_grad set
+    if debug_grads:
+        print("\nChecking requires_grad status on LoRA parameters:")
+        total_trainable = 0
+        for name, module in all_lora_modules[:3]:  # Just check the first few
+            if hasattr(module, "lora_A") and hasattr(module, "lora_B"):
+                lora_a_requires_grad = module.lora_A.weight.requires_grad
+                lora_b_requires_grad = module.lora_B.weight.requires_grad
+                print(f"  {name}: lora_A.requires_grad={lora_a_requires_grad}, lora_B.requires_grad={lora_b_requires_grad}")
+                if lora_a_requires_grad:
+                    total_trainable += module.lora_A.weight.numel()
+                if lora_b_requires_grad:
+                    total_trainable += module.lora_B.weight.numel()
+        print(f"Total confirmed trainable parameters: {total_trainable:,}")
     
     # Initialize wandb if requested
     if use_wandb:
@@ -286,7 +324,7 @@ def train_model_parallel(
     optimizer_parameters = []
     for device_idx, device in enumerate(devices):
         # Get LoRA parameters from each device
-        for _, module in model.lm.transformer.device_layers[device_idx].named_modules():
+        for name, module in model.lm.transformer.device_layers[device_idx].named_modules():
             if hasattr(module, "lora_A"):
                 optimizer_parameters.extend(module.lora_A.parameters())
                 optimizer_parameters.extend(module.lora_B.parameters())
@@ -299,6 +337,13 @@ def train_model_parallel(
                     optimizer_parameters.extend(module.lora_A.parameters())
                     optimizer_parameters.extend(module.lora_B.parameters())
     
+    # Debug: Check optimizer parameters are correctly collected
+    if debug_grads:
+        print(f"\nOptimizer has {len(optimizer_parameters)} parameter tensors")
+        print(f"First few optimizer parameters:")
+        for i, p in enumerate(optimizer_parameters[:5]):
+            print(f"  Param {i}: shape={p.shape}, device={p.device}, requires_grad={p.requires_grad}")
+    
     # Set up optimizer
     optimizer = optim.AdamW(
         optimizer_parameters,
@@ -309,18 +354,30 @@ def train_model_parallel(
     
     # Set up learning rate scheduler
     from transformers import get_scheduler
+    
+    # Calculate total number of training steps more conservatively
+    # This avoids the learning rate dropping too quickly
+    total_training_steps = epochs * len(train_dataloader)
+    
+    # Make warmup a percentage of total steps if it's too small
+    if warmup_steps < total_training_steps * 0.05:  # Ensure at least 5% warmup
+        warmup_steps = int(total_training_steps * 0.05)
+        print(f"Adjusted warmup steps to {warmup_steps} (5% of total steps)")
+    
+    print(f"Learning rate schedule: initial_lr={lr}, warmup_steps={warmup_steps}, total_steps={total_training_steps}")
+    
     scheduler = get_scheduler(
         "cosine",
         optimizer,
-        warmup_steps,
-        int(epochs * len(train_dataloader) / grad_acc),
+        num_warmup_steps=warmup_steps,
+        num_training_steps=total_training_steps,
     )
 
     # Set up loss function
     criterion = nn.CrossEntropyLoss()
     
     # Create output directory for model checkpoints
-    save_path = "models/lora_model_parallel/"
+    save_path = "models/lora_model_parallel_attempt_2/"
     os.makedirs(save_path, exist_ok=True)
     
     # Initialize training state
@@ -330,7 +387,37 @@ def train_model_parallel(
     # Main training loop
     for epoch in range(epochs):
         for batch_idx, (audio, label) in enumerate(train_dataloader):
-            optimizer.zero_grad()
+            # Force memory cleanup periodically to prevent VRAM creep
+            if batch_idx % memory_cleanup_freq == 0:
+                for device_idx in range(len(devices)):
+                    # Empty CUDA cache on each device
+                    with torch.cuda.device(devices[device_idx]):
+                        torch.cuda.empty_cache()
+                # Force Python garbage collection
+                gc.collect()
+                
+                # Log memory usage for monitoring
+                if use_wandb:
+                    memory_stats = {}
+                    for device_idx, device in enumerate(devices):
+                        with torch.cuda.device(device):
+                            memory_stats[f"gpu_{device_idx}_memory_allocated"] = torch.cuda.memory_allocated() / (1024 ** 3)
+                            memory_stats[f"gpu_{device_idx}_memory_reserved"] = torch.cuda.memory_reserved() / (1024 ** 3)
+                    run.log(memory_stats)
+                
+                # Print memory usage
+                print("\nMemory usage after cleanup:")
+                for device_idx, device in enumerate(devices):
+                    with torch.cuda.device(device):
+                        allocated = torch.cuda.memory_allocated() / (1024 ** 3)
+                        reserved = torch.cuda.memory_reserved() / (1024 ** 3)
+                        print(f"  GPU {device_idx}: {allocated:.2f} GB allocated, {reserved:.2f} GB reserved")
+                print()
+
+            # Don't zero gradients at the start of every batch when using gradient accumulation
+            # Only zero gradients at the start of each effective optimization step
+            if batch_idx % grad_acc == 0:
+                optimizer.zero_grad()
 
             all_codes = []
             texts = []
@@ -354,120 +441,224 @@ def train_model_parallel(
                 continue
                 
             # Prepare conditions - need to be on first device
-            attributes, _ = model._prepare_tokens_and_attributes(texts, None)
-            conditions = attributes
-            
-            # Apply classifier free guidance if needed
-            if use_cfg:
-                from audiocraft.modules.conditioners import ClassifierFreeGuidanceDropout
-                null_conditions = ClassifierFreeGuidanceDropout(p=1.0)(conditions)
-                conditions = conditions + null_conditions
+            try:
+                attributes, _ = model._prepare_tokens_and_attributes(texts, None)
+                conditions = attributes
                 
-            # Tokenize and condition the model - ensure tensors are on the right device
-            tokenized = model.lm.condition_provider.tokenize(conditions)
-            cfg_conditions = model.lm.condition_provider(tokenized)
-            condition_tensors = cfg_conditions
+                # Apply classifier free guidance if needed
+                if use_cfg:
+                    from audiocraft.modules.conditioners import ClassifierFreeGuidanceDropout
+                    null_conditions = ClassifierFreeGuidanceDropout(p=1.0)(conditions)
+                    conditions = conditions + null_conditions
+                    
+                # Tokenize and condition the model - ensure tensors are on the right device
+                tokenized = model.lm.condition_provider.tokenize(conditions)
+                cfg_conditions = model.lm.condition_provider(tokenized)
+                condition_tensors = cfg_conditions
 
-            codes = torch.cat(all_codes, dim=0)  # Will be moved to device in compute_predictions
+                codes = torch.cat(all_codes, dim=0)  # Will be moved to device in compute_predictions
 
-            # Forward pass through the model
-            lm_output = model.lm.compute_predictions(
-                codes=codes, conditions=[], condition_tensors=condition_tensors
-            )
+                # Forward pass through the model
+                lm_output = model.lm.compute_predictions(
+                    codes=codes, conditions=[], condition_tensors=condition_tensors
+                )
 
-            # Extract predictions and targets - all on last device now
-            last_device = devices[-1]
-            codes_target = codes[0].to(last_device)
-            logits = lm_output.logits[0]
-            mask = lm_output.mask[0]
-
-            # Debug shapes to understand the mismatch
-            # print(f"Original shapes - logits: {logits.shape}, mask: {mask.shape}, codes_target: {codes_target.shape}")
-            
-            # Convert to one-hot encoding
-            codes_target = one_hot_encode(codes_target, num_classes=2048)
-            
-            # Ensure mask and logits have compatible shapes before indexing
-            # Flatten logits and codes while ensuring alignment with mask
-            flattened_logits = logits.reshape(-1, 2048)
-            flattened_codes = codes_target.reshape(-1, 2048)
-            flattened_mask = mask.reshape(-1)
-            
-            # print(f"Flattened shapes - logits: {flattened_logits.shape}, mask: {flattened_mask.shape}")
-            
-            # Make sure mask isn't longer than the flattened tensors
-            mask_length = min(flattened_mask.shape[0], flattened_logits.shape[0])
-            flattened_mask = flattened_mask[:mask_length]
-            flattened_logits = flattened_logits[:mask_length]
-            flattened_codes = flattened_codes[:mask_length]
-            
-            # Apply mask by selecting only valid positions
-            valid_indices = flattened_mask.nonzero().squeeze()
-            if valid_indices.numel() > 0:
-                masked_logits = flattened_logits[valid_indices]
-                masked_codes = flattened_codes[valid_indices]
+                # Extract predictions and targets - all on last device now
+                last_device = devices[-1]
+                codes_target = codes[0].to(last_device)
+                logits = lm_output.logits[0]
+                mask = lm_output.mask[0]
                 
-                # Compute loss only on valid positions
-                loss = criterion(masked_logits, masked_codes)
-            else:
-                print("Warning: No valid positions found in mask!")
-                loss = torch.tensor(0.0, device=last_device, requires_grad=True)
-
-            # Update step counter
-            current_step += 1 / grad_acc
-
-            # Backward pass
-            loss.backward()
-
-            # Skip gradient update if not at accumulation boundary
-            if batch_idx % grad_acc != grad_acc - 1:
-                continue
+                # Convert to one-hot encoding
+                codes_target = one_hot_encode(codes_target, num_classes=2048)
                 
-            # Calculate gradient norm for logging
-            total_norm = 0
-            for p in optimizer_parameters:
-                if p.grad is not None:
-                    param_norm = p.grad.data.norm(2)
-                    total_norm += param_norm.item() ** 2
-            total_norm = total_norm ** 0.5
-
-            # Clip gradients to prevent explosions
-            torch.nn.utils.clip_grad_norm_(optimizer_parameters, 0.5)
-
-            # Optimizer step
-            optimizer.step()
+                # Ensure mask and logits have compatible shapes before indexing
+                # Flatten logits and codes while ensuring alignment with mask
+                flattened_logits = logits.reshape(-1, 2048)
+                flattened_codes = codes_target.reshape(-1, 2048)
+                flattened_mask = mask.reshape(-1)
                 
-            # Update learning rate
-            scheduler.step()
+                # Make sure mask isn't longer than the flattened tensors
+                mask_length = min(flattened_mask.shape[0], flattened_logits.shape[0])
+                flattened_mask = flattened_mask[:mask_length]
+                flattened_logits = flattened_logits[:mask_length]
+                flattened_codes = flattened_codes[:mask_length]
+                
+                # Apply mask by selecting only valid positions
+                valid_indices = flattened_mask.nonzero().squeeze()
+                if valid_indices.numel() > 0:
+                    masked_logits = flattened_logits[valid_indices]
+                    masked_codes = flattened_codes[valid_indices]
+                    
+                    # Compute loss only on valid positions
+                    loss = criterion(masked_logits, masked_codes)
+                else:
+                    print("Warning: No valid positions found in mask!")
+                    loss = torch.tensor(0.0, device=last_device, requires_grad=True)
 
-            # Log metrics
-            if use_wandb:
-                run.log({
-                    "loss": loss.item(),
-                    "total_norm": total_norm,
-                    "lr": optimizer.param_groups[0]["lr"],
-                })
+                # Scale loss if using gradient accumulation
+                if grad_acc > 1:
+                    loss = loss / grad_acc
 
-            # Print progress
-            print(
-                f"Epoch: {epoch}/{epochs}, Batch: {batch_idx}/{len(train_dataloader)}, "
-                f"Loss: {loss.item():.6f}, Grad Norm: {total_norm:.6f}, "
-                f"LR: {optimizer.param_groups[0]['lr']:.6f}"
-            )
+                # Update step counter - only increment after completing a full effective batch
+                if (batch_idx + 1) % grad_acc == 0 or (batch_idx + 1 == len(train_dataloader)):
+                    current_step += 1
 
-            # Save model checkpoint if requested
-            if save_models and int(current_step) % save_step == 0:
-                save_checkpoint(model, f"{save_path}/musicgen_lora_{int(current_step)}.pt", devices)
-                print(f"Saved checkpoint at step {int(current_step)}")
+                # Backward pass
+                loss.backward()
+
+                # Skip optimizer update if not at accumulation boundary
+                if (batch_idx + 1) % grad_acc != 0 and (batch_idx + 1 != len(train_dataloader)):
+                    # Print interim loss without gradient info
+                    print(
+                        f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] "
+                        f"Epoch: {epoch+1}/{epochs}, Batch: {batch_idx}/{len(train_dataloader)}, "
+                        f"Loss: {loss.item():.6f}, Accumulating gradients ({(batch_idx % grad_acc) + 1}/{grad_acc})"
+                    )
+                    
+                    # Debug gradient flow if needed
+                    if debug_grads and batch_idx == 0:
+                        print("\nChecking gradient flow during accumulation:")
+                        check_gradient_flow(all_lora_modules[:3])
+                    
+                    # Clean up tensors to prevent memory accumulation
+                    del lm_output, logits, mask, codes, condition_tensors
+                    del flattened_logits, flattened_codes, flattened_mask, valid_indices
+                    if 'masked_logits' in locals(): del masked_logits
+                    if 'masked_codes' in locals(): del masked_codes
+                    continue
+
+                # Calculate gradient norm for logging - AFTER backward but BEFORE clip
+                # Using the new method that captures all gradients correctly
+                total_norm = compute_grad_norm(optimizer_parameters)
+                
+                # Debug gradient flow on first batch
+                if debug_grads and batch_idx < 3:
+                    print(f"\nBatch {batch_idx} - Checking gradient flow after backward:")
+                    check_gradient_flow(all_lora_modules[:3])
+                    
+                    # Debug parameters with zero gradients
+                    zero_grad_count = 0
+                    for p in optimizer_parameters:
+                        if p.grad is None or p.grad.abs().sum() == 0:
+                            zero_grad_count += 1
+                    print(f"Parameters with zero gradients: {zero_grad_count}/{len(optimizer_parameters)}")
+
+                # Clip gradients to prevent explosions
+                torch.nn.utils.clip_grad_norm_(optimizer_parameters, 0.5)
+
+                # Optimizer step
+                optimizer.step()
+                    
+                # Update learning rate
+                scheduler.step()
+
+                # Log metrics
+                if use_wandb:
+                    run.log({
+                        "loss": loss.item() * grad_acc,  # Multiply by grad_acc to get true loss
+                        "total_norm": total_norm,
+                        "lr": optimizer.param_groups[0]["lr"],
+                    })
+
+                # Print progress
+                print(
+                    f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] "
+                    f"Epoch: {epoch}/{epochs}, Batch: {batch_idx}/{len(train_dataloader)}, "
+                    f"Loss: {loss.item() * grad_acc:.6f}, Grad Norm: {total_norm:.6f}, "
+                    f"LR: {optimizer.param_groups[0]['lr']:.6f}"
+                )
+
+                # Zero gradients after optimizer step
+                optimizer.zero_grad()
+
+                # Save model checkpoint if requested
+                if save_models and int(current_step) % save_step == 0:
+                    save_checkpoint(model, f"{save_path}/musicgen_lora_{int(current_step)}.pt", devices)
+                    print(f"Saved checkpoint at step {int(current_step)}")
+            
+            finally:
+                # Clean up tensors explicitly to prevent memory leaks
+                if 'lm_output' in locals(): del lm_output
+                if 'logits' in locals(): del logits
+                if 'mask' in locals(): del mask
+                if 'codes' in locals(): del codes
+                if 'condition_tensors' in locals(): del condition_tensors
+                if 'flattened_logits' in locals(): del flattened_logits
+                if 'flattened_codes' in locals(): del flattened_codes
+                if 'flattened_mask' in locals(): del flattened_mask
+                if 'valid_indices' in locals(): del valid_indices
+                if 'masked_logits' in locals(): del masked_logits
+                if 'masked_codes' in locals(): del masked_codes
+                if 'tokenized' in locals(): del tokenized
+                if 'cfg_conditions' in locals(): del cfg_conditions
+                if 'attributes' in locals(): del attributes
+                if 'conditions' in locals(): del conditions
+                if 'null_conditions' in locals(): del null_conditions
+                if 'all_codes' in locals(): del all_codes
+                if 'texts' in locals(): del texts
+                
+                # Clean up CUDA cache periodically
+                if batch_idx % memory_cleanup_freq == 0:
+                    torch.cuda.empty_cache()
 
         # Save checkpoint after each epoch
         save_checkpoint(model, f"{save_path}/musicgen_lora_epoch_{epoch+1}.pt", devices)
         print(f"Saved checkpoint after epoch {epoch+1}")
+        
+        # Force full memory cleanup after each epoch
+        for device_idx in range(len(devices)):
+            with torch.cuda.device(devices[device_idx]):
+                torch.cuda.empty_cache()
+        gc.collect()
 
     # Save final model
     save_checkpoint(model, f"{save_path}/musicgen_lora_final.pt", devices)
     print("Training complete! Final model saved.")
 
+
+def compute_grad_norm(parameters):
+    """Compute gradient norm with proper handling of None gradients."""
+    if isinstance(parameters, torch.Tensor):
+        parameters = [parameters]
+    
+    parameters = [p for p in parameters if p.grad is not None]
+    if len(parameters) == 0:
+        return torch.tensor(0.0)
+    
+    device = parameters[0].grad.device
+    total_norm = torch.norm(
+        torch.stack([
+            torch.norm(p.grad.detach(), 2).to(device) 
+            for p in parameters
+        ]), 
+        2
+    )
+    
+    return total_norm.item()
+
+def check_gradient_flow(named_modules):
+    """Prints gradient flow for debugging purposes."""
+    for name, module in named_modules:
+        if not hasattr(module, "lora_A") or not hasattr(module, "lora_B"):
+            continue
+            
+        print(f"\nGradient flow for {name}:")
+        # Check lora_A gradients
+        if module.lora_A.weight.grad is not None:
+            grad_norm_A = module.lora_A.weight.grad.norm().item()
+            grad_mean_A = module.lora_A.weight.grad.mean().item()
+            print(f"  lora_A.weight - grad norm: {grad_norm_A:.6f}, grad mean: {grad_mean_A:.6f}")
+        else:
+            print(f"  lora_A.weight - NO GRADIENT")
+            
+        # Check lora_B gradients
+        if module.lora_B.weight.grad is not None:
+            grad_norm_B = module.lora_B.weight.grad.norm().item()
+            grad_mean_B = module.lora_B.weight.grad.mean().item()
+            print(f"  lora_B.weight - grad norm: {grad_norm_B:.6f}, grad mean: {grad_mean_B:.6f}")
+        else:
+            print(f"  lora_B.weight - NO GRADIENT")
 
 def save_checkpoint(model, path, devices):
     """Save a LoRA checkpoint with only the adapter weights."""
@@ -529,6 +720,10 @@ def main():
                         help='Comma-separated list of GPU IDs to use (e.g., "0,1")')
     parser.add_argument('--fp16', type=int, required=False, default=0,
                         help='Use half precision for training')
+    parser.add_argument('--memory_cleanup_freq', type=int, required=False, default=10,
+                        help='Frequency (in batches) for cleaning up GPU memory cache')
+    parser.add_argument('--debug_grads', type=int, required=False, default=1,
+                       help='Enable gradient debugging (1=enabled, 0=disabled)')
     
     args = parser.parse_args()
     
@@ -557,7 +752,9 @@ def main():
         gpu_ids=gpu_ids,
         cpu_offload=args.cpu_offload,
         target_modules=args.target_modules,
-        fp16=args.fp16
+        fp16=args.fp16,
+        memory_cleanup_freq=args.memory_cleanup_freq,
+        debug_grads=bool(args.debug_grads)
     )
 
 
