@@ -64,4 +64,4 @@ if __name__ == "__main__":
 #error handler
 @app.exception_handler(404)
 async def custom_404_handler(_, __):
-    return FileResponse('../frontend/build/index.html')
+    return FileResponse('../jsfrontend/build/index.html')

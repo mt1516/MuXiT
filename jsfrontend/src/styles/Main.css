@@ -122,6 +122,16 @@
     margin-bottom: 5px;
     color: #666;
   }
+
+  .generated-audio {
+    margin: 10px 0;
+    width: 100%;
+  }
+  
+  .generated-audio audio {
+    width: 100%;
+    max-width: 300px;
+  }
   
   .message-text {
     font-size: 15px;
@@ -195,4 +205,10 @@
     padding: 5px;
     margin-left: 5px;
     font-size: 18px;
+  }
+
+  .error-message {
+    color: #6f1719;
+    margin: 5px 0;
+    font-size: 0.9em;
   }
