@@ -40,21 +40,86 @@ const App: React.FC = () => {
     }
   }, [activeChat, history]);
 
-  const handleSendMessage = (text: string, isAudio: boolean = false) => {
+  const generateMusic = async (prompt: string, audioFile?: File) => {
+    const formData = new FormData();
+    formData.append('prompt', prompt);
+    formData.append('duration', '30'); //default duration?
+    
+    if (audioFile) {
+      formData.append('audio_input', audioFile);
+    }
+    try {
+      const response = await fetch('http://localhost:8000/generate-music/', {
+        method: 'POST',
+        body: formData,
+      });
+
+      // catch error handler
+      if (!response.ok) {
+        throw new Error('Failed to generate music');
+      }
+      const audioBlob = await response.blob();
+      return URL.createObjectURL(audioBlob);
+    } catch (error) {
+      console.error('Error generating music:', error);
+      throw error;
+    }
+  };
+
+  // handle message detect audio
+  const handleSendMessage = async (text: string, audioFile?: File) => {
     const newUserMessage: Message = {
       id: Date.now().toString(),
-      text,
+      text: audioFile ? `Audio input: ${audioFile.name}` : text,
       sender: 'user',
-      isAudio,
+      isAudio: !!audioFile,
     };
 
+    // update history and message
     setMessages((prev) => [...prev, newUserMessage]);
     updateHistory(newUserMessage);
+
+    // loading if the above tested correct
+    /* const loadingMessage: Message = {
+      id: `loading-${Date.now()}`,
+      text: 'Generating music...',
+      sender: 'ai',
+      isLoading: true,
+      timestamp: new Date(),
+    };
+    setMessages(prev => [...prev, loadingMessage]);
+    updateHistory(loadingMessage); */
+
+    try{
+      const audioUrl = await generateMusic(text, audioFile);
+
+      const aiResponse: Message = {
+        id: Date.now().toString(),
+        text: 'Here is your generated music:',
+        sender: 'ai',
+        audioUrl: audioUrl,
+      };
+
+      setMessages(prev => [...prev, aiResponse]);
+      updateHistory(aiResponse);
+
+    } catch (error) {
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        text: 'Sorry, there was an error generating the music. Please try again.',
+        sender: 'ai',
+        error: true,
+      };
+
+      setMessages(prev => [...prev, errorMessage]);
+      updateHistory(errorMessage);
+    }
+    
 
     setTimeout(() => {
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
-        text: `dummy AI response to: "${text}"`,
+        text: `System timeout.`,
         sender: 'ai',
       };
       setMessages(prev => [...prev, aiResponse]);

@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 interface InputProps {
-  onSendMessage: (text: string, isAudio?: boolean) => void;
+  onSendMessage: (text: string, audioFile?: File) => void;
 }
 
 const Input: React.FC<InputProps> = ({ onSendMessage }) => {
   const [inputText, setInputText] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,10 +16,20 @@ const Input: React.FC<InputProps> = ({ onSendMessage }) => {
     }
   };
 
-  // dummy text to check out the response
-  const handleAudioInput = () => {
-    const dummyAudioText = "dummy audio";
-    onSendMessage(dummyAudioText, true);
+  const handleAudioClick = () => {
+    fileInputRef.current?.click();
+  };
+
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file: any = e.target.files?.[0];
+    if (file) {
+      onSendMessage(`Audio input: ${file.name}`, file);
+      //reset
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
   return (
@@ -29,7 +40,18 @@ const Input: React.FC<InputProps> = ({ onSendMessage }) => {
         onChange={(e) => setInputText(e.target.value)}
         placeholder="Provide your idea on music style changing..."
       />
-      <button type="button" className="send-button" onClick={handleAudioInput}>
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="audio/*"
+        style={{ display: 'none' }}
+      />
+      <button 
+        type="button" 
+        className="send-button" 
+        onClick={handleAudioClick}
+      >
         Audio
       </button>
       <button type="submit" className="send-button">

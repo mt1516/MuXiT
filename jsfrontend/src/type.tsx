@@ -3,6 +3,9 @@ export interface Message {
     text: string;
     sender: 'user' | 'ai';
     isAudio?: boolean;
+    audioUrl?: string; 
+    //isLoading?: boolean;
+    error?: boolean; 
   }
   
   export interface ChatHistoryItem {
