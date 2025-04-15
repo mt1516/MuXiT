@@ -144,22 +144,6 @@
     color: #888;
   }
   
-  .chat-input {
-    display: flex;
-    padding: 15px;
-    background-color: #2b2b2b;
-    border-top: 1px solid #2b2b2b;
-  }
-  
-  .chat-input input {
-    flex: 1;
-    padding: 10px 15px;
-    border: 1px solid #ddd;
-    border-radius: 20px;
-    outline: none;
-    font-size: 15px;
-  }
-  
   .chat-input button {
     margin-left: 10px;
     padding: 10px 15px;
@@ -173,16 +157,25 @@
   .chat-input button:hover {
     background-color: #0d8c6d;
   }
-  
-  .audio-button {
-    background-color: #f0f0f0 ;
-    color: #333 ;
-    font-size: 18px;
+
+  .audio-preview {
+    display: flex;
+    align-items: center;
+    padding: 5px 10px;
+    background: #f0f0f0;
+    border-radius: 4px;
+    margin-top: 5px;
+    font-size: 0.8em;
   }
   
-  .audio-button:hover {
-    background-color: #e0e0e0 ;
+  .audio-preview button {
+    margin-left: auto;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6f1719;
   }
+  
 
   .history-item {
     display: flex;
@@ -211,4 +204,68 @@
     color: #6f1719;
     margin: 5px 0;
     font-size: 0.9em;
+  }
+
+  .chat-input {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    background: #2b2b2b;
+    border-top: 1px solid #202123;
+  }
+  
+  .chat-input input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+  
+  .audio-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  
+  .audio-button {
+    padding: 10px;
+    border: none;
+    background: #eee;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .audio-button.active {
+    background: #4CAF50;
+    color: white;
+  }
+  
+  .audio-preview {
+    display: flex;
+    align-items: center;
+    background: #e3f2fd;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.8em;
+  }
+  
+  .remove-audio {
+    margin-left: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #f44336;
+  }
+  
+  /* Message Styles */
+  .user-audio-message, .ai-audio-response {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .audio-label {
+    font-size: 0.8em;
+    color: #666;
+    margin-top: 2px;
   }

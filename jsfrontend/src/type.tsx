@@ -1,4 +1,5 @@
 export interface Message {
+    audioFile?: any;
     id: string;
     text: string;
     sender: 'user' | 'ai';
