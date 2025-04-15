@@ -1,6 +1,6 @@
 import os
 # Explicitly set only GPUs 5 and 7 to be visible to PyTorch
-os.environ["CUDA_VISIBLE_DEVICES"] = "1,2,3,4,5,6,7"
+os.environ["CUDA_VISIBLE_DEVICES"] = "6,7"
 import sys
 import torch
 import argparse
@@ -97,6 +97,7 @@ def train_model_parallel(
     fp16: bool = False,  # Set to True if you want to use half precision
     memory_cleanup_freq: int = 8,  # Clean memory every N batches
     debug_grads: bool = True,  # Debug gradient flow
+    disable_scheduler: bool = False,  # Option to disable the cosine scheduler
 ):
     """Train using model parallelism with LoRA."""
     
@@ -366,18 +367,20 @@ def train_model_parallel(
     
     print(f"Learning rate schedule: initial_lr={lr}, warmup_steps={warmup_steps}, total_steps={total_training_steps}")
     
-    scheduler = get_scheduler(
-        "cosine",
-        optimizer,
-        num_warmup_steps=warmup_steps,
-        num_training_steps=total_training_steps,
-    )
+    scheduler = None
+    if not disable_scheduler:
+        scheduler = get_scheduler(
+            "cosine",
+            optimizer,
+            num_warmup_steps=warmup_steps,
+            num_training_steps=total_training_steps,
+        )
 
     # Set up loss function
     criterion = nn.CrossEntropyLoss()
     
     # Create output directory for model checkpoints
-    save_path = "models/lora_model_parallel_attempt_2/"
+    save_path = "models/lora_model_parallel_attempt_2_lr_4/"
     os.makedirs(save_path, exist_ok=True)
     
     # Initialize training state
@@ -551,7 +554,8 @@ def train_model_parallel(
                 optimizer.step()
                     
                 # Update learning rate
-                scheduler.step()
+                if scheduler:
+                    scheduler.step()
 
                 # Log metrics
                 if use_wandb:
@@ -724,6 +728,8 @@ def main():
                         help='Frequency (in batches) for cleaning up GPU memory cache')
     parser.add_argument('--debug_grads', type=int, required=False, default=1,
                        help='Enable gradient debugging (1=enabled, 0=disabled)')
+    parser.add_argument('--disable_scheduler', type=int, required=False, default=0,
+                        help='Disable the cosine scheduler (1=disabled, 0=enabled)')
     
     args = parser.parse_args()
     
@@ -754,7 +760,8 @@ def main():
         target_modules=args.target_modules,
         fp16=args.fp16,
         memory_cleanup_freq=args.memory_cleanup_freq,
-        debug_grads=bool(args.debug_grads)
+        debug_grads=bool(args.debug_grads),
+        disable_scheduler=bool(args.disable_scheduler)
     )
 
 
