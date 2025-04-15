@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, BackgroundTasks, UploadFile
+from fastapi import FastAPI, HTTPException, BackgroundTasks, UploadFile, Form, File
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -12,24 +12,23 @@ from inference_class import Inference #import the inference class
 app = FastAPI()
 
 #add CORS middleware to accept http request from different sources
+#cors reject error
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[os.getenv("http://localhost:3000")],
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-class MusicRequest(BaseModel):
-    prompt: str
-    duration: int  # Duration for each track
-
-# Disable tokenizers parallelism warning
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
 @app.post("/generate-music/")
-async def generate_music(request: MusicRequest, audio_input: UploadFile, background_tasks: BackgroundTasks):
-    if request.duration <= 0:
+async def generate_music(
+    prompt: str = Form(...),
+    duration: int = Form(...),
+    audio_input: UploadFile = File(None),
+    background_tasks: BackgroundTasks = BackgroundTasks()
+):
+    if duration <= 0:
         raise HTTPException(status_code=400, detail="Duration must be greater than zero")
     try:
         if audio_input is not None:
@@ -40,11 +39,10 @@ async def generate_music(request: MusicRequest, audio_input: UploadFile, backgro
             with open(file_location, "wb") as buffer:
                 shutil.copyfileobj(audio_input.file, buffer)
                 print("Melody inference starts.")
-                inference = Inference(prompt=request.prompt, duration=request.duration, audio_input="temp/audio_input.wav")
-
+                inference = Inference(prompt=prompt, duration=duration, audio_input="temp/audio_input.wav")
         else:
             print("No melody inference starts.")
-            inference = Inference(prompt=request.prompt, duration=request.duration, audio_input=None)
+            inference = Inference(prompt=prompt, duration=duration, audio_input=None)
 
         inference.generate() #output is 'output.wav'
 
