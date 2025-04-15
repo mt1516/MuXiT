@@ -19,7 +19,7 @@ from audiocraft.utils.autocast import TorchAutocast
 class Inference:
     def __init__(self, prompt:str, duration:float=30, audio_input:str=None):
         self.prompt = prompt
-        self.weights_path = '/csproject/fyp24_ho3/tmtong/MuXiT/models/lora_model_parallel/musicgen_lora_epoch_7.pt'
+        self.weights_path = '/project/fyp24_ho3/tmtong/MuXiT/models/lora_model_parallel_attempt_2/musicgen_lora_final.pt'
         self.save_path = 'output.wav'
         self.model_id = 'facebook/musicgen-stereo-melody'
         self.duration = duration

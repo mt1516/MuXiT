@@ -27,7 +27,7 @@ const App: React.FC = () => {
   const [activeChat, setActiveChat] = useState<string>('1');
   const [pendingAudio, setPendingAudio] = useState<File | null>(null);
 
-  // Load messages when active chat changes
+  //load messages
   useEffect(() => {
     const currentChat = history.find(chat => chat.id === activeChat);
     if (currentChat) {
@@ -55,7 +55,7 @@ const App: React.FC = () => {
   };
 
   const handleSendMessage = async (text: string, audioFile?: File) => {
-    // Create combined message
+    // create combined message
     const newUserMessage: Message = {
       id: Date.now().toString(),
       text: text || (audioFile ? "Audio input" : ""),
@@ -66,12 +66,12 @@ const App: React.FC = () => {
 
     setMessages(prev => [...prev, newUserMessage]);
     updateHistory(newUserMessage);
-    setPendingAudio(null); // Clear pending audio after send
+    setPendingAudio(null); //clear pending audio after send
 
     try {
       const formData = new FormData();
       formData.append('prompt', text || "Generate music");
-      formData.append('duration', '30');
+      formData.append('duration', String(30));
       
       if (audioFile) {
         formData.append('audio_input', audioFile);
@@ -82,8 +82,12 @@ const App: React.FC = () => {
         body: formData,
       });
 
-      if (!response.ok) throw new Error('Failed to generate music');
-
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error details:', errorData);
+        throw new Error(errorData.detail || 'Failed to generate music');
+      }
+      
       const audioBlob = await response.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
 
