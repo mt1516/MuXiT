@@ -11,18 +11,18 @@ from inference_class import Inference #import the inference class
 
 app = FastAPI()
 
-class MusicRequest(BaseModel):
-    prompt: str
-    duration: int  # Duration for each track
-
 #add CORS middleware to accept http request from different sources
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[os.getenv("FRONTEND_URL")],
+    allow_origins=[os.getenv("http://localhost:3000")],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+class MusicRequest(BaseModel):
+    prompt: str
+    duration: int  # Duration for each track
 
 # Disable tokenizers parallelism warning
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -60,8 +60,3 @@ async def generate_music(request: MusicRequest, audio_input: UploadFile, backgro
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
-    
-#error handler
-@app.exception_handler(404)
-async def custom_404_handler(_, __):
-    return FileResponse('../jsfrontend/build/index.html')
