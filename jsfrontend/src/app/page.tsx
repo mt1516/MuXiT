@@ -6,6 +6,7 @@ import ChatHistory from '@/components/history';
 import ChatMain from '@/components/chatbot';
 import { Message, ChatHistoryItem } from '@/type';
 import Input from '@/components/input';
+import axios from 'axios';
 
 const App: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -27,7 +28,7 @@ const App: React.FC = () => {
   const [activeChat, setActiveChat] = useState<string>('1');
   const [pendingAudio, setPendingAudio] = useState<File | null>(null);
 
-  //load messages
+  // Load messages
   useEffect(() => {
     const currentChat = history.find(chat => chat.id === activeChat);
     if (currentChat) {
@@ -55,7 +56,7 @@ const App: React.FC = () => {
   };
 
   const handleSendMessage = async (text: string, audioFile?: File) => {
-    // create combined message
+    // Create combined message
     const newUserMessage: Message = {
       id: Date.now().toString(),
       text: text || (audioFile ? "Audio input" : ""),
@@ -66,7 +67,7 @@ const App: React.FC = () => {
 
     setMessages(prev => [...prev, newUserMessage]);
     updateHistory(newUserMessage);
-    setPendingAudio(null); //clear pending audio after send
+    setPendingAudio(null); // Clear pending audio after send
 
     try {
       const formData = new FormData();
@@ -90,10 +91,11 @@ const App: React.FC = () => {
       
       const audioBlob = await response.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
-
+      
+      const aiMessage = await axios.post('http://localhost:8001/generate', { text });
       const aiResponse: Message = {
         id: Date.now().toString(),
-        text: text ? `Response to: "${text}"` : 'Generated music',
+        text: text ? aiMessage.data.text : 'Generated music',
         sender: 'ai',
         audioUrl: audioUrl,
       };
