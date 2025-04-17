@@ -1,12 +1,21 @@
 # MuXiT
 This is the repository for the FYP of 2024-25 Cohort, supervised by Prof. Andrew Horner. Group code is HO3.
 
-# Training Data Description
-The dataset used is [FMA](https://os.unil.cloud.switch.ch/fma/fma_full.zip) (Defferrard, Benzi, Vandergheynst, and Bresson, 2017), which, in full, features 106,574 soundtracks (of full length) spanning across 161 genres. Downloading the dataset using the link to the left allows access to all metadata files and soundtracks (specifically, 17 out of 156 folders of soundtracks - randomly sampled - are used to optimise storage).
+# Front-end files
+- For prototyping purposes, please modify ```Gradio.py```.
 
-Data cleaning procedure:
+## Changelogs:
+- Get new script for root
+  - `npm run start` to start the whole frontend and backend system
+  - `npm run start-backend` to awake the backend 
+  - `npm run start-frontend` to awake the frontend 
+  - `npm run build` to refresh and build frontend when initialising on a new env, error invoked, or updates
+- Hosts
+  - Frontend hosted at localhost:3000 port
+  - Backend hosted at localhost:8000 port (Experimental: Gemma-3 (1B) chatbot, when deployed, runs on localhost:8001)
+- Debugging
+  - Fixed 422 error for the FASTAPI presentation problem and getting to test for the connection with model
+  - Fixed CORS error using middleware
+  - Fixed dark mode text
 
-0. Identify useful information from metadata (tracks.csv, found in the FMA zip file) (See comments in ```txtGen.py``` for description of useful fields)
-1. Generate (trackID).txt by running ```txtGen.py```
-2. Aggregate all .txt files (generated in 1.) into NewTracks.csv (or AggTracks.csv) by running ```csvAgg.py```
-3. Generate tracks.json from NewTracks.csv (or AggTracks.csv) by running ```jsonify.py```
+Tomy Kwong | Crystal Chan
