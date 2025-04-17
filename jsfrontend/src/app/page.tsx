@@ -92,16 +92,29 @@ const App: React.FC = () => {
       const audioBlob = await response.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
       
-      const aiMessage = await axios.post('http://localhost:8001/generate', { text });
-      const aiResponse: Message = {
-        id: Date.now().toString(),
-        text: text ? aiMessage.data.text : 'Generated music',
-        sender: 'ai',
-        audioUrl: audioUrl,
-      };
+      try {
+        const aiMessage = await axios.post('http://localhost:8001/generate', { text });
+        const aiResponse: Message = {
+          id: Date.now().toString(),
+          text: text ? aiMessage.data.text : 'Generated music',
+          sender: 'ai',
+          audioUrl: audioUrl,
+        };
 
-      setMessages(prev => [...prev, aiResponse]);
-      updateHistory(aiResponse);
+        setMessages(prev => [...prev, aiResponse]);
+        updateHistory(aiResponse);
+      } catch (error) {
+        console.error('Error generating AI response:', error);
+        const errorMessage: Message = {
+          id: Date.now().toString(),
+          text: 'Error generating AI response',
+          sender: 'ai',
+          audioUrl: audioUrl,
+          // error: true,
+        };
+        setMessages(prev => [...prev, errorMessage]);
+        updateHistory(errorMessage);
+      }
 
     } catch (error) {
       console.error('Error:', error);
