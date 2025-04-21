@@ -1,5 +1,5 @@
 1:HL["/_next/static/css/344d532093009ace.css","style",{"crossOrigin":""}]
-0:["Q0PhO0-VWDcG0F8IKR-rd",[[["",{"children":["__PAGE__",{}]},"$undefined","$undefined",true],"$L2",[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/344d532093009ace.css","precedence":"next","crossOrigin":""}]],"$L3"]]]]
+0:["L_amoBb3cqrqZ1MC-gv6L",[[["",{"children":["__PAGE__",{}]},"$undefined","$undefined",true],"$L2",[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/344d532093009ace.css","precedence":"next","crossOrigin":""}]],"$L3"]]]]
 4:I[6954,[],""]
 5:I[7264,[],""]
 3:[["$","meta","0",{"charSet":"utf-8"}],["$","title","1",{"children":"MuXiT"}],["$","meta","2",{"name":"description","content":"Generative AI for Music"}],["$","meta","3",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]

@@ -5,7 +5,7 @@ export interface Message {
     sender: 'user' | 'ai';
     isAudio?: boolean;
     audioUrl?: string; 
-    //isLoading?: boolean;
+    audioData?: string;
     error?: boolean; 
   }
   
@@ -13,4 +13,5 @@ export interface Message {
     id: string;
     title: string;
     messages: Message[];
+    createdAt?: number;
   }

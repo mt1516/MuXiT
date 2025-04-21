@@ -1,5 +1,4 @@
 /** @type {import('next').NextConfig} */
-
 const nextConfig = {
     async headers() {
         return [
@@ -7,10 +6,10 @@ const nextConfig = {
                 source: "/backend/:path*",
                 headers: [
                     { key: "Access-Control-Allow-Origin", value: "http://localhost:3000"},
-                ]
+                ],
             }
         ]
     }
 }
 
-module.exports = nextConfig
+module.exports = nextConfig;

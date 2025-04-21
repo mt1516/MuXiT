@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "start-backend": "cd backend && uvicorn api:app --reload",
+    "start-frontend": "cd jsfrontend && npm start",
+    "build-frontend": "cd jsfrontend && npm run build"
   },
   "dependencies": {
     "axios": "^1.8.4",

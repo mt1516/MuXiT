@@ -150,7 +150,7 @@
     border: none;
     border-radius: 20px;
     background-color: #10a37f;
-    color: white;
+    color: #e4e4e6;
     cursor: pointer;
   }
   
@@ -214,7 +214,14 @@
     border-top: 1px solid #202123;
   }
   
-  .chat-input input {
+  .chat-input-text {
+    flex: 4;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+
+  .chat-input-duration {
     flex: 1;
     padding: 10px;
     border: 1px solid #ddd;
@@ -257,7 +264,6 @@
     color: #f44336;
   }
   
-  /* Message Styles */
   .user-audio-message, .ai-audio-response {
     display: flex;
     flex-direction: column;
@@ -268,4 +274,29 @@
     font-size: 0.8em;
     color: #666;
     margin-top: 2px;
+  }
+
+  .duration {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    flex: 1;
+  }
+  
+  .duration-label {
+    font-size: 0.8em;
+    color: #f1f1f1;
+    margin-left: 4px;
+  }
+  
+  .chat-input-duration {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #4d4d4f;
+    border-radius: 4px;
+    background-color: #e4e4e6;
+    color: black;
+    text-align: center;
+    -moz-appearance: textfield;
   }
