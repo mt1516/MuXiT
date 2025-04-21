@@ -7,16 +7,7 @@ import ChatMain from "@/components/chatbot";
 import { Message, ChatHistoryItem } from "@/type";
 import Input from "@/components/input";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-//import axios from 'axios';
-
-//read audio files
-const blobToBase64 = (blob: Blob): Promise<string> => {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.readAsDataURL(blob);
-  });
-};
+import axios from 'axios';
 
 //local storage safe access
 const getLocalStorage = (key: string) => {
@@ -146,6 +137,7 @@ const App: React.FC = () => {
           : chat
       )
     );
+    setMessages(prev => [...prev, message]);
   };
 
   const handleSendMessage = async (
@@ -162,7 +154,6 @@ const App: React.FC = () => {
       audioFile: audioFile,
     };
 
-    setMessages((prev) => [...prev, newUserMessage]);
     updateHistory(newUserMessage);
     setPendingAudio(null); // Clear pending audio after send
 
@@ -194,7 +185,7 @@ const App: React.FC = () => {
         reader.readAsDataURL(audioBlob);
       });
 
-      /*       try {
+             try {
         const aiMessage = await axios.post('http://localhost:8001/generate', { text });
         const aiResponse: Message = {
           id: Date.now().toString(),
@@ -203,7 +194,6 @@ const App: React.FC = () => {
           audioUrl: audioUrl,
         };
 
-        setMessages(prev => [...prev, aiResponse]);
         updateHistory(aiResponse);
       } catch (error) {
         console.error('Error generating AI response:', error);
@@ -214,9 +204,8 @@ const App: React.FC = () => {
           audioUrl: audioUrl,
           // error: true,
         };
-        setMessages(prev => [...prev, errorMessage]);
         updateHistory(errorMessage);
-      } */
+      } 
     } catch (error) {
       console.error("Error:", error);
       const errorMessage: Message = {
@@ -225,7 +214,6 @@ const App: React.FC = () => {
         sender: "ai",
         error: true,
       };
-      setMessages((prev) => [...prev, errorMessage]);
       updateHistory(errorMessage);
     }
   };

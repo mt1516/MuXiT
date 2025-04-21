@@ -26,10 +26,6 @@ const ChatHistory: React.FC<ChatHistoryProps> = ({
         Add New Chat
       </button>
 
-      {/* not implemented for the setting part */}
-      <button className="new-chat-setting-button">
-        Setting
-      </button>
       <div className="history-list">
         {history.map((item) => (
           <div
