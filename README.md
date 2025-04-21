@@ -18,4 +18,11 @@ This is the repository for the FYP of 2024-25 Cohort, supervised by Prof. Andrew
   - Fixed CORS error using middleware
   - Fixed dark mode text
 
+## Updates on 20250422:
+- Added duration parameter
+- Added local storage system, users can keep the history even after closing the website
+- Bugs:
+  - Axios is not able to be resolved, better to add resolver on webpack when working on the miniLLM
+  - The user message disappeared right after sending, should be bug related to the local storage, I will try to fix it, yet if anyone want help also can try...
+
 Tomy Kwong | Crystal Chan
