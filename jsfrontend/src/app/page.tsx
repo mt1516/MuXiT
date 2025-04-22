@@ -1,290 +1,213 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import "../styles/Main.css";
-import ChatHistory from "@/components/history";
-import ChatMain from "@/components/chatbot";
-import { Message, ChatHistoryItem } from "@/type";
-import Input from "@/components/input";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
+import React, { useState, useEffect } from 'react';
+import '../styles/Main.css';
+import ChatHistory from '@/components/history';
+import ChatMain from '@/components/chatbot';
+import { Message, ChatHistoryItem } from '@/type';
+import Input from '@/components/input';
 //import axios from 'axios';
 
-//local storage safe access
-const getLocalStorage = (key: string) => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem(key);
-  }
-  return null;
-};
-
-const setLocalStorage = (key: string, value: string) => {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(key, value);
-  }
-};
+const LOCAL_STORAGE_KEY = 'musicChatHistory';
 
 const App: React.FC = () => {
-  const [isClient, setIsClient] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [activeChat, setActiveChat] = useState<string>("1");
-  const [pendingAudio, setPendingAudio] = useState<File | null>(null);
-  const [history, setHistory] = useLocalStorage<ChatHistoryItem[]>(
-    "musicChatHistory",
-    [
-      {
-        id: "1",
-        title: "New Chat",
-        messages: [
-          {
-            id: "1",
-            text: "Hello! Describe your music or upload audio to generate!",
-            sender: "ai",
-          },
-        ],
-        createdAt: Date.now(),
-      },
-    ]
-  );
-
-  //init history
-  useEffect(() => {
-    setIsClient(true);
-    const savedHistory = getLocalStorage("musicChatHistory");
-    const initialHistory = savedHistory
-      ? JSON.parse(savedHistory)
-      : [
-          {
-            id: "1",
-            title: "New Chat",
-            messages: [
-              {
-                id: "1",
-                text: "Hello! Describe your music or upload audio to generate!",
-                sender: "ai",
-              },
-            ],
-            createdAt: Date.now(),
-          },
-        ];
-
-    setHistory(initialHistory);
-    setActiveChat(initialHistory[0].id);
-  }, []);
-
-  //load messages
-  useEffect(() => {
-    const currentChat = history.find((chat) => chat.id === activeChat);
-    setMessages(currentChat?.messages || []);
-  }, [activeChat, history]);
-
-  //save message to local when change
-  useEffect(() => {
-    const cleanHistory = history.map((chat) => ({
-      ...chat,
-      messages: chat.messages.map((msg) => ({
-        ...msg,
-        audioUrl: undefined,
-      })),
-    }));
-    setLocalStorage("musicChatHistory", JSON.stringify(cleanHistory));
-
-    // console log checkers
-    console.log("Current history state:", history);
-    console.log(
-      "Current localStorage:",
-      JSON.parse(localStorage.getItem("musicChatHistory") || "null")
-    );
-  }, [history]);
-
-  // recreate audio url
-  useEffect(() => {
-    const messagesWithUrls = messages.map((msg) => {
-      if (msg.audioData && !msg.audioUrl) {
+  //load from localStorage on init render
+  const loadFromLocalStorage = (): ChatHistoryItem[] => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (saved) {
         try {
-          const byteString = atob(msg.audioData.split(",")[1]);
-          const ab = new ArrayBuffer(byteString.length);
-          const ia = new Uint8Array(ab);
-          for (let i = 0; i < byteString.length; i++) {
-            ia[i] = byteString.charCodeAt(i);
-          }
-          const blob = new Blob([ab], { type: "audio/wav" });
-          return {
-            ...msg,
-            audioUrl: URL.createObjectURL(blob),
-          };
+          return JSON.parse(saved);
         } catch (e) {
-          console.error("Error recreating audio:", e);
-          return msg;
+          console.error('LocalStorage data parse error', e);
         }
       }
-      return msg;
-    });
-
-    if (JSON.stringify(messagesWithUrls) !== JSON.stringify(messages)) {
-      setMessages(messagesWithUrls);
     }
+    //init if no localStorage data
+    return [
+      {
+        id: '1',
+        title: 'New Chat',
+        messages: [
+          {
+            id: '1',
+            text: 'Hello! Describe your music or upload audio to generate!',
+            sender: 'ai',
+          },
+        ],
+      },
+    ];
+  };
 
-    return () => {
-      messagesWithUrls.forEach((msg) => {
-        if (msg.audioUrl) URL.revokeObjectURL(msg.audioUrl);
-      });
-    };
-  }, [messages]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [history, setHistory] = useState<ChatHistoryItem[]>(loadFromLocalStorage);
+  const [activeChat, setActiveChat] = useState<string>('1');
+  const [pendingAudio, setPendingAudio] = useState<File | null>(null);
 
-  //update one commucation box -> prev + id + chat
+  //save to localStorage when history change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(history));
+    }
+  }, [history]);
+
+  //load messages when activeChat change
+  useEffect(() => {
+    const currentChat = history.find(chat => chat.id === activeChat);
+    if (currentChat) {
+      setMessages(currentChat.messages);
+    } else {
+      setMessages([]);
+    }
+  }, [activeChat, history]);
+
+  // update history with new message and title
   const updateHistory = (message: Message) => {
-    setHistory((prev) => {
-      const updatedHistory = prev.map((chat) =>
-        chat.id === activeChat // matching id
+    setHistory(prev => {
+      const updatedHistory = prev.map(chat =>
+        chat.id === activeChat
           ? {
               ...chat,
-              messages: [...chat.messages, message], // chat messages + new message
+              messages: [...chat.messages, message],
               title:
-                chat.messages.length === 1 && message.sender === "user"
-                  ? message.text.slice(0, 30) +
-                    (message.text.length > 30 ? "..." : "")
-                  : chat.title, //update chat title
+                chat.messages.length === 1 && message.sender === 'user'
+                  ? message.text.slice(0, 30) + (message.text.length > 30 ? '...' : '')
+                  : chat.title,
             }
           : chat
       );
-
-      window.localStorage.setItem(
-        "musicChatHistory",
-        JSON.stringify(updatedHistory)
-      );
       return updatedHistory;
     });
-    console.log("new message being added:", message);
-    // this console show a corret localstorage updated to musicchathistory
-    //why??? the localstorage cannot keep the user sent message
   };
 
-  const handleSendMessage = async (
-    text: string,
-    duration: number,
-    audioFile?: File
-  ) => {
+  // main commucation
+  const handleSendMessage = async (text: string, duration: number, audioFile?: File) => {
     // Create combined message
     const newUserMessage: Message = {
       id: Date.now().toString(),
       text: text || (audioFile ? "Audio input" : ""),
-      sender: "user",
+      sender: 'user',
       isAudio: !!audioFile,
       audioFile: audioFile,
     };
 
-    console.log("Before updateHistory - user message:", newUserMessage);
+    setMessages(prev => [...prev, newUserMessage]);
     updateHistory(newUserMessage);
-
     setPendingAudio(null); // Clear pending audio after send
 
-    // feedback from systems, it is correct for now.
     try {
       const formData = new FormData();
-      formData.append("prompt", text || "Generate music");
-      formData.append("duration", String(duration));
-
+      formData.append('prompt', text || "Generate music");
+      formData.append('duration', String(30));
+      
       if (audioFile) {
-        formData.append("audio_input", audioFile);
+        formData.append('audio_input', audioFile);
       }
 
-      //get current history before API call to prevent race conditions
-      const currentHistory = JSON.parse(
-        localStorage.getItem("musicChatHistory") || "[]"
-      );
-      const currentChat = currentHistory.find(
-        (c: ChatHistoryItem) => c.id === activeChat
-      );
-
-      const response = await fetch("http://localhost:8000/generate-music/", {
-        method: "POST",
+      const response = await fetch('http://localhost:8000/generate-music/', {
+        method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("Error details:", errorData);
-        throw new Error(errorData.detail || "Failed to generate music");
+        console.error('Error details:', errorData);
+        throw new Error(errorData.detail || 'Failed to generate music');
       }
-
+      
       const audioBlob = await response.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
+      
+      // mini LLM (disabled for now)
+      try {
+        //const aiMessage = await axios.post('http://localhost:8001/generate', { text });
+        const aiResponse: Message = {
+          id: Date.now().toString(),
+          text: 'Generated music',
+          //text: text ? aiMessage.data.text : 'Generated music',
+          sender: 'ai',
+          audioUrl: audioUrl,
+        };
 
-      const aiResponse: Message = {
-        id: Date.now().toString(),
-        text: "Generated music",
-        sender: "ai",
-        audioUrl: audioUrl,
-      };
+        setMessages(prev => [...prev, aiResponse]);
+        updateHistory(aiResponse);
+      } catch (error) {
+        console.error('Error generating AI response:', error);
+        const errorMessage: Message = {
+          id: Date.now().toString(),
+          text: 'Error generating AI response',
+          sender: 'ai',
+          audioUrl: audioUrl,
+        };
+        setMessages(prev => [...prev, errorMessage]);
+        updateHistory(errorMessage);
+      }
 
-      updateHistory(aiResponse);
-      console.log("AI response added:", aiResponse);
     } catch (error) {
-      console.error("Error:", error);
+      console.error('Error:', error);
       const errorMessage: Message = {
         id: Date.now().toString(),
-        text: "Error generating music",
-        sender: "ai",
+        text: 'Error generating music',
+        sender: 'ai',
         error: true,
       };
+      setMessages(prev => [...prev, errorMessage]);
       updateHistory(errorMessage);
     }
   };
 
-  //manage history chat list use set history, if manage messages in the history, use updatehistory
+  // getting new chat history
   const startNewChat = () => {
     const newChatId = Date.now().toString();
     const newChat: ChatHistoryItem = {
       id: newChatId,
-      title: "New Chat",
+      title: 'New Chat',
       messages: [
         {
-          id: "1",
-          text: "Hello! Describe your music or upload audio to generate!",
-          sender: "ai",
+          id: '1',
+          text: 'Hello! Describe your music or upload audio to generate!',
+          sender: 'ai',
         },
       ],
-      createdAt: Date.now(),
     };
 
-    setHistory((prev) => [newChat, ...prev]);
+    setHistory(prev => [newChat, ...prev]);
     setActiveChat(newChatId);
     setPendingAudio(null);
   };
 
-  // deleting a histroy chat box
+  // delete chat history
   const deleteChat = (chatId: string) => {
-    setHistory((prev) => prev.filter((chat) => chat.id !== chatId));
+    setHistory(prev => {
+      const updatedHistory = prev.filter(chat => chat.id !== chatId);
+      return updatedHistory;
+    });
+    
     if (chatId === activeChat) {
-      setActiveChat(
-        (prev) => history.find((chat) => chat.id !== prev)?.id || ""
-      );
+      setActiveChat(prev => {
+        const remainingChats = history.filter(chat => chat.id !== chatId);
+        return remainingChats.length > 0 ? remainingChats[0].id : '';
+      });
     }
   };
 
   return (
     <div className="app">
-      {isClient ? (
-        <>
-          <ChatHistory
-            history={history}
-            activeChat={activeChat}
-            onSelectChat={setActiveChat}
-            onNewChat={startNewChat}
-            onDeleteChat={deleteChat}
-          />
-          <div className="chat-container">
-            <ChatMain messages={messages} />
-            <Input
-              onSendMessage={handleSendMessage}
-              pendingAudio={pendingAudio}
-              setPendingAudio={setPendingAudio}
-            />
-          </div>
-        </>
-      ) : (
-        <div>Loading...</div>
-      )}
+      <ChatHistory 
+        history={history} 
+        activeChat={activeChat} 
+        onSelectChat={setActiveChat} 
+        onNewChat={startNewChat}
+        onDeleteChat={deleteChat}
+      />
+      <div className="chat-container">
+        <ChatMain messages={messages} />
+        <Input 
+          onSendMessage={handleSendMessage}
+          pendingAudio={pendingAudio}
+          setPendingAudio={setPendingAudio}
+        />
+      </div>
     </div>
   );
 };
