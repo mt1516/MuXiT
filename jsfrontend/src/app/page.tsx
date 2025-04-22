@@ -7,7 +7,7 @@ import ChatMain from "@/components/chatbot";
 import { Message, ChatHistoryItem } from "@/type";
 import Input from "@/components/input";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-import axios from 'axios';
+//import axios from 'axios';
 
 //local storage safe access
 const getLocalStorage = (key: string) => {
@@ -26,18 +26,24 @@ const setLocalStorage = (key: string, value: string) => {
 const App: React.FC = () => {
   const [isClient, setIsClient] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [activeChat, setActiveChat] = useState<string>("1");
+  const [pendingAudio, setPendingAudio] = useState<File | null>(null);
   const [history, setHistory] = useLocalStorage<ChatHistoryItem[]>(
-    'musicChatHistory',
-    [{
-      id: '1',
-      title: 'New Chat',
-      messages: [{
-        id: '1',
-        text: 'Hello! Describe your music or upload audio to generate!',
-        sender: 'ai',
-      }],
-      createdAt: Date.now()
-    }]
+    "musicChatHistory",
+    [
+      {
+        id: "1",
+        title: "New Chat",
+        messages: [
+          {
+            id: "1",
+            text: "Hello! Describe your music or upload audio to generate!",
+            sender: "ai",
+          },
+        ],
+        createdAt: Date.now(),
+      },
+    ]
   );
 
   //init history
@@ -65,9 +71,6 @@ const App: React.FC = () => {
     setActiveChat(initialHistory[0].id);
   }, []);
 
-  const [activeChat, setActiveChat] = useState<string>("1");
-  const [pendingAudio, setPendingAudio] = useState<File | null>(null);
-
   //load messages
   useEffect(() => {
     const currentChat = history.find((chat) => chat.id === activeChat);
@@ -84,7 +87,14 @@ const App: React.FC = () => {
       })),
     }));
     setLocalStorage("musicChatHistory", JSON.stringify(cleanHistory));
-  }, [history, isClient]);
+
+    // console log checkers
+    console.log("Current history state:", history);
+    console.log(
+      "Current localStorage:",
+      JSON.parse(localStorage.getItem("musicChatHistory") || "null")
+    );
+  }, [history]);
 
   // recreate audio url
   useEffect(() => {
@@ -121,23 +131,32 @@ const App: React.FC = () => {
     };
   }, [messages]);
 
+  //update one commucation box -> prev + id + chat
   const updateHistory = (message: Message) => {
-    setHistory((prev) =>
-      prev.map((chat) =>
-        chat.id === activeChat
+    setHistory((prev) => {
+      const updatedHistory = prev.map((chat) =>
+        chat.id === activeChat // matching id
           ? {
               ...chat,
-              messages: [...chat.messages, message],
+              messages: [...chat.messages, message], // chat messages + new message
               title:
                 chat.messages.length === 1 && message.sender === "user"
                   ? message.text.slice(0, 30) +
                     (message.text.length > 30 ? "..." : "")
-                  : chat.title,
+                  : chat.title, //update chat title
             }
           : chat
-      )
-    );
-    setMessages(prev => [...prev, message]);
+      );
+
+      window.localStorage.setItem(
+        "musicChatHistory",
+        JSON.stringify(updatedHistory)
+      );
+      return updatedHistory;
+    });
+    console.log("new message being added:", message);
+    // this console show a corret localstorage updated to musicchathistory
+    //why??? the localstorage cannot keep the user sent message
   };
 
   const handleSendMessage = async (
@@ -154,9 +173,12 @@ const App: React.FC = () => {
       audioFile: audioFile,
     };
 
+    console.log("Before updateHistory - user message:", newUserMessage);
     updateHistory(newUserMessage);
+
     setPendingAudio(null); // Clear pending audio after send
 
+    // feedback from systems, it is correct for now.
     try {
       const formData = new FormData();
       formData.append("prompt", text || "Generate music");
@@ -165,6 +187,14 @@ const App: React.FC = () => {
       if (audioFile) {
         formData.append("audio_input", audioFile);
       }
+
+      //get current history before API call to prevent race conditions
+      const currentHistory = JSON.parse(
+        localStorage.getItem("musicChatHistory") || "[]"
+      );
+      const currentChat = currentHistory.find(
+        (c: ChatHistoryItem) => c.id === activeChat
+      );
 
       const response = await fetch("http://localhost:8000/generate-music/", {
         method: "POST",
@@ -179,33 +209,16 @@ const App: React.FC = () => {
 
       const audioBlob = await response.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
-      const audioData = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.readAsDataURL(audioBlob);
-      });
 
-             try {
-        const aiMessage = await axios.post('http://localhost:8001/generate', { text });
-        const aiResponse: Message = {
-          id: Date.now().toString(),
-          text: text ? aiMessage.data.text : 'Generated music',
-          sender: 'ai',
-          audioUrl: audioUrl,
-        };
+      const aiResponse: Message = {
+        id: Date.now().toString(),
+        text: "Generated music",
+        sender: "ai",
+        audioUrl: audioUrl,
+      };
 
-        updateHistory(aiResponse);
-      } catch (error) {
-        console.error('Error generating AI response:', error);
-        const errorMessage: Message = {
-          id: Date.now().toString(),
-          text: 'Error generating AI response',
-          sender: 'ai',
-          audioUrl: audioUrl,
-          // error: true,
-        };
-        updateHistory(errorMessage);
-      } 
+      updateHistory(aiResponse);
+      console.log("AI response added:", aiResponse);
     } catch (error) {
       console.error("Error:", error);
       const errorMessage: Message = {
@@ -218,6 +231,7 @@ const App: React.FC = () => {
     }
   };
 
+  //manage history chat list use set history, if manage messages in the history, use updatehistory
   const startNewChat = () => {
     const newChatId = Date.now().toString();
     const newChat: ChatHistoryItem = {
@@ -238,6 +252,7 @@ const App: React.FC = () => {
     setPendingAudio(null);
   };
 
+  // deleting a histroy chat box
   const deleteChat = (chatId: string) => {
     setHistory((prev) => prev.filter((chat) => chat.id !== chatId));
     if (chatId === activeChat) {

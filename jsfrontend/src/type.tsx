@@ -5,7 +5,7 @@ export interface Message {
     sender: 'user' | 'ai';
     isAudio?: boolean;
     audioUrl?: string; 
-    audioData?: string;
+    audioData?: string; //really need this?
     error?: boolean; 
   }
   
