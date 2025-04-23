@@ -118,13 +118,17 @@ const App: React.FC = () => {
       const audioBlob = await response.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
       
-      // mini LLM (disabled for now)
+      // SLM module
       try {
-        //const aiMessage = await axios.post('http://localhost:8001/generate', { text });
+        const aiMessage = await fetch('http://localhost:8000/generate-response', {
+          method: 'POST',
+          body: formData,
+        });
+        const aiReply = await aiMessage.json();
         const aiResponse: Message = {
           id: Date.now().toString(),
-          text: 'Generated music',
-          //text: text ? aiMessage.data.text : 'Generated music',
+          // text: 'Generated music',
+          text: text ? aiReply[0]["generated_text"] : 'Generated music',
           sender: 'ai',
           audioUrl: audioUrl,
         };
