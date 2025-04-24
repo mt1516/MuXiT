@@ -34,16 +34,16 @@ Before proceeding to the backend, please make sure all Python library dependenci
 This branch houses the frontend scripts that host the Next.js site on which the user interface of the system runs. Highlights:
 - ```Gradio.py```: For early prototyping purposes.
 - Hosts:
- -- Frontend hosted at localhost:3000 (127.0.0.1:3000)
- -- Backend hosted at localhost:8000 (127.0.0.1:8000)
+  - Frontend hosted at localhost:3000 (127.0.0.1:3000)
+  - Backend hosted at localhost:8000 (127.0.0.1:8000)
 - Running the system:
- -- ```npm run start``` to start the whole frontend and backend system (For best compatibility, execute this command in the ```(MuXiT\)jsfrontend``` directory)
- -- ```npm run start-backend``` to awake the backend (Alternatively, run ```backend\api.py``` in another terminal window on the same machine)
- -- ```npm run start-frontend``` to awake the frontend
+  - ```npm run start``` to start the whole frontend and backend system (For best compatibility, execute this command in the ```(MuXiT\)jsfrontend``` directory)
+  - ```npm run start-backend``` to awake the backend (Alternatively, run ```backend\api.py``` in another terminal window on the same machine)
+  - ```npm run start-frontend``` to awake the frontend
 - System features spotlight:
- -- Local chat history: Keep your past chats (all text and audio files), even after you have closed the server!
- -- Customising music generation: On top of text prompts, feel free to upload audio clips to generate more creative stuff!
- -- SLM integration: Get friendly responses with every message sent in the system! Powered by Google Gemma 3 (Note: To use this model, please make sure you have downloaded the model weights locally, and change the model path to the local path in ```api.py```. Alternatively, please make sure you have logged in with a Hugging Face token with gated access permission by running ```huggingface-cli login``` - follow the on-screen instructions after executing the command)
+  - Local chat history: Keep your past chats (all text and audio files), even after you have closed the server!
+  - Customising music generation: On top of text prompts, feel free to upload audio clips to generate more creative stuff!
+  - SLM integration: Get friendly responses with every message sent in the system! Powered by Google Gemma 3 (Note: To use this model, please make sure you have downloaded the model weights locally, and change the model path to the local path in ```api.py```. Alternatively, please make sure you have logged in with a Hugging Face token with gated access permission by running ```huggingface-cli login``` - follow the on-screen instructions after executing the command)
 
 ## Model Training (detached / experimental_multi_GPU) Description
 [Main contributor: Melvin Tong]
