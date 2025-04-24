@@ -3,6 +3,7 @@ This is the repository for the FYP of 2024-25 Cohort, supervised by Prof. Andrew
 
 # Front-end files
 - For prototyping purposes, please modify ```Gradio.py```.
+- To run the full system, refer to the instructions below.
 
 ## Changelogs:
 - Get new script for root
@@ -12,7 +13,7 @@ This is the repository for the FYP of 2024-25 Cohort, supervised by Prof. Andrew
   - `npm run build` to refresh and build frontend when initialising on a new env, error invoked, or updates
 - Hosts
   - Frontend hosted at localhost:3000 port
-  - Backend hosted at localhost:8000 port (Experimental: Gemma-3 (1B) chatbot, when deployed, runs on localhost:8001)
+  - Backend hosted at localhost:8000 port
 - Debugging
   - Fixed 422 error for the FASTAPI presentation problem and getting to test for the connection with model
   - Fixed CORS error using middleware
