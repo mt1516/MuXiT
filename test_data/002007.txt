@@ -1,3 +1,0 @@
-track_title: Weather (from Chicago)
-description: 
-genre: [experimental, field recordings]
