@@ -26,6 +26,7 @@ Data cleaning procedure:
 This branch houses the backend scripts that host the music generator model inference, as well as the SLM module. Highlights:
 - ```api.py```: Scripts that serve the required backend modules
 - ```inference_class.py```: Inference class definition for the music generator model
+
 Before proceeding to the backend, please make sure all Python library dependencies are collected by running ```(python -m) pip install -r (dependencies.txt or requirements.txt)```. This .txt file is located in the ```(MuXiT\)backend``` directory.
 
 ## Frontend Description
@@ -44,7 +45,8 @@ This branch houses the frontend scripts that host the Next.js site on which the 
 - System features spotlight:
   - Local chat history: Keep your past chats (all text and audio files), even after you have closed the server!
   - Customising music generation: On top of text prompts, feel free to upload audio clips to generate more creative stuff!
-  - SLM integration: Get friendly responses with every message sent in the system! Powered by Google Gemma 3 (Note: To use this model, please make sure you have downloaded the model weights locally, and change the model path to the local path in ```api.py```. Alternatively, please make sure you have logged in with a Hugging Face token with gated access permission by running ```huggingface-cli login``` - follow the on-screen instructions after executing the command)
+  - SLM integration: Get friendly responses with every message sent in the system! Powered by Google Gemma 3
+  (Note: To use this model, please make sure you have downloaded the model weights locally, and change the model path to the local path in ```api.py```. Alternatively, please make sure you have logged in with a Hugging Face token with gated access permission by running ```huggingface-cli login``` - follow the on-screen instructions after executing the command)
 
 ## Model Training (detached / experimental_multi_GPU) Description
 [Main contributor: Melvin Tong]
