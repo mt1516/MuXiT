@@ -67,8 +67,7 @@ Training code can be found in the ```musicgen_trainer``` folder (courtesy of [@c
 - 20250401:
   - Updated base model loading
   - Included more output methods
-- 20250413
-  - Implemented ```inference_class.py```
+- 20250413: Implemented ```inference_class.py```
 - Changes made outside of this branch
   - [Contributor: Tomy Kwong | Branch: front-end] Implemented SLM integration in ```api.py```
 
