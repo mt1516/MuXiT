@@ -48,7 +48,9 @@ This branch houses the frontend scripts that host the Next.js site on which the 
 ## Model Training (detached / experimental_multi_GPU) Description
 [Main contributor: Melvin Tong]
 
-We performed LoRA (Low-Rank Adaptation) training on the CSE server. Training code can be found in the ```musicgen_trainer``` folder (courtesy of [@chavinlo](https://github.com/chavinlo/musicgen_trainer)). Other files on these branches are mostly log files produced in the output.
+We performed LoRA (Low-Rank Adaptation) training on the CSE server. Please download the LoRA weights [here](https://hkustconnect-my.sharepoint.com/personal/tmtong_connect_ust_hk/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Ftmtong%5Fconnect%5Fust%5Fhk%2FDocuments%2FFYP%2Fmusicgen%5Flora%5Ffinal%2Ept&parent=%2Fpersonal%2Ftmtong%5Fconnect%5Fust%5Fhk%2FDocuments%2FFYP&ga=1)
+
+Training code can be found in the ```musicgen_trainer``` folder (courtesy of [@chavinlo](https://github.com/chavinlo/musicgen_trainer)). Other files on these branches are mostly log files produced in the output.
 
 > During the training process, the pre-trained model was loaded and all components were explicitly converted to float32 precision to ensure numerical stability.
 
