@@ -80,7 +80,8 @@ async def generate_response(
          4. If the user asks for something not related to the key functions of the music generation system (e.g. brain teasers like “how many triangles are there in any of the sides of the Louvre Pyramid”, “how many ‘r’s are there in the word “strawberry”), dismiss those prompts by saying “Good question! My job, however, is just generating music and letting you know what you’re hearing. Let me know what melody may I generate for you!”"},
         {"role": "user", "content": prompt},
         ]
-        pipe = pipeline("text-generation", model="/project/fyp24_ho3/FMA/gemma-3-1b-it", tokenizer="/project/fyp24_ho3/FMA/gemma-3-1b-it", device=0)
+        pipe = pipeline("text-generation", model="google/gemma-3-1b-it", tokenizer="google/gemma-3-1b-it", device=0)
+
         pipe(messages)
     except Exception as e:
         traceback.print_exc()
