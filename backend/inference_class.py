@@ -31,7 +31,6 @@ class Inference:
         self.temperature = 1.0
         self.cfg_coef = 3.0
         self.audio_input = audio_input
-        self.frame_rate = 32_000
 
     def generate(self):
         model = MusicGen.get_pretrained(self.model_id)
@@ -56,7 +55,7 @@ class Inference:
             duration = self.duration
 
             model.generation_params = {
-                'max_gen_len': int(duration * self.frame_rate),
+                'max_gen_len': int(duration * model.frame_rate),
                 'use_sampling': self.use_sampling,
                 'temp': self.temperature,
                 'top_k': self.top_k,
