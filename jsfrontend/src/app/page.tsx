@@ -134,7 +134,7 @@ const App: React.FC = () => {
         const aiResponse: Message = {
           id: Date.now().toString(),
           // text: 'Generated music',
-          text: text ? aiReply[0]["generated_text"] : 'Generated music',
+          text: text ? aiReply["generated_text"] : 'Generated music',
           sender: 'ai',
           audioUrl: audioUrl,
         };

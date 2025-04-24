@@ -81,8 +81,8 @@ async def generate_response(
         {"role": "user", "content": prompt},
         ]
         pipe = pipeline("text-generation", model="google/gemma-3-1b-it", tokenizer="google/gemma-3-1b-it", device=0)
-
-        return pipe(messages)
+        return {"generated_text": pipe(messages)[0]["generated_text"][2]["content"]}
+    
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error generating response: {e}")

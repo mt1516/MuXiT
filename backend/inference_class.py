@@ -20,7 +20,7 @@ class Inference:
     def __init__(self, prompt:str, duration:float=30, audio_input:str=None):
         self.prompt = prompt
         self.weights_path = '../../musicgen_lora_final.pt'
-        self.save_path = 'output.wav'
+        self.save_path = 'output'
         self.model_id = 'facebook/musicgen-stereo-melody'
         self.duration = duration
         self.sample_loops = 2
@@ -83,5 +83,5 @@ class Inference:
             print("Dtype:", gen_audio.dtype)
             print("Contents:", gen_audio)
             gen_audio = gen_audio.cpu()
-            torchaudio.save(self.save_path, gen_audio[0,:,0:duration*32000], model.sample_rate)
+            torchaudio.save(self.save_path+".wav", gen_audio[0,:,0:duration*32000], model.sample_rate)
             #torchaudio.save(self.save_path, gen_audio[0], self.sample_rate)
