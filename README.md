@@ -3,10 +3,12 @@ This is the repository for the FYP of 2024-25 Cohort, supervised by Prof. Andrew
 
 # System Description
 The chronology of branch development, in parallel of the main branch, is summarised as follows:
+
 front-end-dev → back-end-dev & detached / experimental_multi_GPU (model training) → JS_frontend → front-end (where the core components of the system reside, including the backend)
 
 # Training Data Description
 [Main contributor: Tomy Kwong]
+
 The dataset used is [FMA](https://os.unil.cloud.switch.ch/fma/fma_full.zip) (Defferrard, Benzi, Vandergheynst, and Bresson, 2017), which, in full, features 106,574 soundtracks (of full length) spanning across 161 genres. Downloading the dataset using the link to the left allows access to all metadata files and soundtracks (specifically, 17 out of 156 folders of soundtracks - randomly sampled - are used to optimise storage).
 
 Data cleaning procedure:
@@ -18,7 +20,9 @@ Data cleaning procedure:
 
 ## Backend Description
 [Update: Contents in this branch have been merged with the frontend]
+
 [Main contributor: Eric Kwok]
+
 This branch houses the backend scripts that host the music generator model inference, as well as the SLM module. Highlights:
 - ```api.py```: Scripts that serve the required backend modules
 - ```inference_class.py```: Inference class definition for the music generator model
@@ -26,6 +30,7 @@ Before proceeding to the backend, please make sure all Python library dependenci
 
 ## Frontend Description
 [Main contributors: Crystal Chan, Tomy Kwong]
+
 This branch houses the frontend scripts that host the Next.js site on which the user interface of the system runs. Highlights:
 - ```Gradio.py```: For early prototyping purposes.
 - Hosts:
@@ -42,7 +47,11 @@ This branch houses the frontend scripts that host the Next.js site on which the 
 
 ## Model Training (detached / experimental_multi_GPU) Description
 [Main contributor: Melvin Tong]
+
 We performed LoRA (Low-Rank Adaptation) training on the CSE server. Training code can be found in the ```musicgen_trainer``` folder (courtesy of [@chavinlo](https://github.com/chavinlo/musicgen_trainer)). Other files on these branches are mostly log files produced in the output.
+
 > During the training process, the pre-trained model was loaded and all components were explicitly converted to float32 precision to ensure numerical stability.
+
 > The transformer layers were evenly partitioned across four GPUs, with each device responsible for twelve out of forty-eight layers.
+
 > LoRA adapters were selectively injected into key linear submodules (linear1, linear2, and out_proj), resulting in approximately 28M trainable parameters —representing only 2.8% of the total model parameters.
