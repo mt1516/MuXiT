@@ -6,7 +6,7 @@ The chronology of branch development, in parallel of the main branch, is summari
 
 front-end-dev → back-end-dev & detached / experimental_multi_GPU (model training) → JS_frontend → front-end (where the core components of the system reside, including the backend)
 
-# Training Data Description
+## Training Data Description
 [Main contributor: Tomy Kwong]
 
 The dataset used is [FMA](https://os.unil.cloud.switch.ch/fma/fma_full.zip) (Defferrard, Benzi, Vandergheynst, and Bresson, 2017), which, in full, features 106,574 soundtracks (of full length) spanning across 161 genres. Downloading the dataset using the link to the left allows access to all metadata files and soundtracks (specifically, 17 out of 156 folders of soundtracks - randomly sampled - are used to optimise storage).
