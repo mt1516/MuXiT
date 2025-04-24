@@ -11,6 +11,12 @@ import Input from '@/components/input';
 const LOCAL_STORAGE_KEY = 'musicChatHistory';
 
 const App: React.FC = () => {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true); // init render
+  }, []);
+
   //load from localStorage on init render
   const loadFromLocalStorage = (): ChatHistoryItem[] => {
     if (typeof window !== 'undefined') {
@@ -197,21 +203,27 @@ const App: React.FC = () => {
 
   return (
     <div className="app">
-      <ChatHistory 
-        history={history} 
-        activeChat={activeChat} 
-        onSelectChat={setActiveChat} 
-        onNewChat={startNewChat}
-        onDeleteChat={deleteChat}
-      />
-      <div className="chat-container">
-        <ChatMain messages={messages} />
-        <Input 
-          onSendMessage={handleSendMessage}
-          pendingAudio={pendingAudio}
-          setPendingAudio={setPendingAudio}
-        />
-      </div>
+      {isClient ? (
+        <>
+          <ChatHistory
+            history={history}
+            activeChat={activeChat}
+            onSelectChat={setActiveChat}
+            onNewChat={startNewChat}
+            onDeleteChat={deleteChat}
+          />
+          <div className="chat-container">
+            <ChatMain messages={messages} />
+            <Input
+              onSendMessage={handleSendMessage}
+              pendingAudio={pendingAudio}
+              setPendingAudio={setPendingAudio}
+            />
+          </div>
+        </>
+      ) : (
+        <div>Loading...</div>
+      )}
     </div>
   );
 };
